@@ -236,7 +236,7 @@ int ExampleFS::Fsyncdir(const char *path, int datasync, struct fuse_file_info *f
 	return 0;
 }
 
-int ExampleFS::Init(struct fuse_conn_info *conn) {
+void* ExampleFS::Init(struct fuse_conn_info *conn) {
 	return 0;
 }
 
