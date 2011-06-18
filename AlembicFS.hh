@@ -1,6 +1,6 @@
 
-#ifndef examples_hh
-#define examples_hh
+#ifndef ALEMBICFS_HH
+#define ALEMBICFS_HH
 
 #include <ctype.h>
 #include <dirent.h>
@@ -65,4 +65,4 @@ public:
 
 
 
-#endif //examples_hh
+#endif // ALEMBICFS_HH

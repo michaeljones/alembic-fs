@@ -1,5 +1,5 @@
 #!/bin/bash
 
-bin/examplefs $1 $2 -f -s
+bin/alembic-fs -f -s $1
 
 

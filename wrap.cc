@@ -1,5 +1,5 @@
 #include "wrap.hh"
-#include "examplefs.hh"
+#include "AlembicFS.hh"
 
 void set_rootdir(const char *path) {
     AlembicFS::Instance()->setRootDir(path);
