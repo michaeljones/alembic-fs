@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
     alembicfs_oper.getxattr = wrap_getxattr;
     alembicfs_oper.listxattr = wrap_listxattr;
     alembicfs_oper.removexattr = wrap_removexattr;
-    alembicfs_oper.opendir = wrap_opendir;
     alembicfs_oper.readdir = wrap_readdir;
     alembicfs_oper.releasedir = wrap_releasedir;
     alembicfs_oper.fsyncdir = wrap_fsyncdir;

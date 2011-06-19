@@ -56,7 +56,6 @@ public:
     int getxattr(const char *path, const char *name, char *value, size_t size);
     int listxattr(const char *path, char *list, size_t size);
     int removexattr(const char *path, const char *name);
-    int opendir(const char *path, struct fuse_file_info *fileInfo);
     int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo);
     int releasedir(const char *path, struct fuse_file_info *fileInfo);
     int fsyncdir(const char *path, int datasync, struct fuse_file_info *fileInfo);

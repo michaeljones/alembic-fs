@@ -202,14 +202,6 @@ int AlembicFS::removexattr(const char *path, const char *name) {
     return RETURN_ERRNO(lremovexattr(fullPath, name));
 }
 
-int AlembicFS::opendir(const char *path, struct fuse_file_info *fileInfo) {
-    printf("opendir(path=%s)\n", path);
-    char fullPath[PATH_MAX];
-    absPath(fullPath, path);
-    DIR *dir = ::opendir(fullPath);
-    fileInfo->fh = (uint64_t)dir;
-    return NULL == dir ? -errno : 0;
-}
 
 int AlembicFS::readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
     printf("readdir(path=%s, offset=%d)\n", path, (int)offset);

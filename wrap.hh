@@ -45,7 +45,6 @@ int wrap_setxattr(const char *path, const char *name, const char *value, size_t 
 int wrap_getxattr(const char *path, const char *name, char *value, size_t size);
 int wrap_listxattr(const char *path, char *list, size_t size);
 int wrap_removexattr(const char *path, const char *name);
-int wrap_opendir(const char *path, struct fuse_file_info *fileInfo);
 int wrap_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo);
 int wrap_releasedir(const char *path, struct fuse_file_info *fileInfo);
 int wrap_fsyncdir(const char *path, int datasync, struct fuse_file_info *fileInfo);

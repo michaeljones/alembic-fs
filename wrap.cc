@@ -79,9 +79,6 @@ int wrap_listxattr(const char *path, char *list, size_t size) {
 int wrap_removexattr(const char *path, const char *name) {
     return AlembicFS::Instance()->removexattr(path, name);
 }
-int wrap_opendir(const char *path, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->opendir(path, fileInfo);
-}
 int wrap_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
     return AlembicFS::Instance()->readdir(path, buf, filler, offset, fileInfo);
 }
