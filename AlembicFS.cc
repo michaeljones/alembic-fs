@@ -31,6 +31,16 @@ void AlembicFS::setStat(struct stat* _stat)
     m_stat = _stat;
 }
 
+void AlembicFS::setFile(const char* path)
+{
+    m_archive = new Alembic::AbcGeom::IArchive(
+            Alembic::AbcCoreHDF5::ReadArchive(),
+            path,
+            Alembic::AbcGeom::ErrorHandler::kQuietNoopPolicy
+            );
+
+}
+
 void AlembicFS::setRootDir(const char *path)
 {
     printf("setting FS root to: %s\n", path);
@@ -221,19 +231,18 @@ int AlembicFS::removexattr(const char *path, const char *name) {
     return RETURN_ERRNO(lremovexattr(fullPath, name));
 }
 
-
-int AlembicFS::readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
+int AlembicFS::readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo)
+{
     printf("readdir(path=%s, offset=%d)\n", path, (int)offset);
-    DIR *dir = (DIR*)fileInfo->fh;
-    struct dirent *de = ::readdir(dir);
-    if(NULL == de) {
-        return -errno;
-    } else {
-        do {
-            if(filler(buf, de->d_name, NULL, 0) != 0) {
-                return -ENOMEM;
-            }
-        } while(NULL != (de = ::readdir(dir)));
+
+    filler(buf, ".", NULL, 0);
+    filler(buf, "..", NULL, 0);
+
+    if ( ! strcmp( path, "/" ) )
+    {
+        Alembic::AbcGeom::IObject iObj = m_archive->getTop();
+
+        filler(buf, iObj.getName().c_str(), NULL, 0);
     }
     return 0;
 }

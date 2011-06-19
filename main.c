@@ -52,6 +52,8 @@ int main(int argc, char *argv[])
     lstat(path, &abcStat);
     AlembicFS::Instance()->setStat( &abcStat );
 
+    AlembicFS::Instance()->setFile( path );
+
     int fuse_stat = fuse_main(argc, argv, &alembicfs_oper, NULL);
 
     printf("fuse_main returned %d\n", fuse_stat);

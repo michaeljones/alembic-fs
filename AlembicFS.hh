@@ -2,6 +2,9 @@
 #ifndef ALEMBICFS_HH
 #define ALEMBICFS_HH
 
+#include <Alembic/AbcGeom/All.h>
+#include <Alembic/AbcCoreHDF5/All.h>
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -26,8 +29,9 @@ public:
 
 public:
 
-    void setRootDir(const char *path);
+    void setRootDir(const char* path);
     void setStat(struct stat* _stat);
+    void setFile(const char* path);
 
 public:
 
@@ -63,12 +67,15 @@ public:
 
 private:
 
+    static AlembicFS *_instance;
+
+private:
+
     const char* m_root;
     struct stat* m_stat;
+    Alembic::AbcGeom::IArchive* m_archive;
 
-    static AlembicFS *_instance;
     void absPath(char dest[PATH_MAX], const char *path);
-
 };
 
 
