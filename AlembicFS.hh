@@ -17,20 +17,19 @@
 
 class AlembicFS
 {
-private: 
-    const char *_root;
-
-    static AlembicFS *_instance;
-
-    void absPath(char dest[PATH_MAX], const char *path);
-
 public:
-    static AlembicFS *Instance();
 
     AlembicFS();
     ~AlembicFS();
 
+    static AlembicFS *Instance();
+
+public:
+
     void setRootDir(const char *path);
+    void setStat(struct stat* _stat);
+
+public:
 
     int getattr(const char *path, struct stat *statbuf);
     int readlink(const char *path, char *link, size_t size);
@@ -61,6 +60,15 @@ public:
     int fsyncdir(const char *path, int datasync, struct fuse_file_info *fileInfo);
     int truncate(const char *path, off_t offset, struct fuse_file_info *fileInfo);
     void* init(struct fuse_conn_info *conn);
+
+private:
+
+    const char* m_root;
+    struct stat* m_stat;
+
+    static AlembicFS *_instance;
+    void absPath(char dest[PATH_MAX], const char *path);
+
 };
 
 

@@ -19,23 +19,42 @@ AlembicFS::~AlembicFS() {
 
 }
 
-void AlembicFS::absPath(char dest[PATH_MAX], const char *path) {
-
-    strcpy(dest, _root);
+void AlembicFS::absPath(char dest[PATH_MAX], const char *path)
+{
+    strcpy(dest, m_root);
     strncat(dest, path, PATH_MAX);
     //printf("translated path: %s to %s\n", path, dest);
 }
 
-void AlembicFS::setRootDir(const char *path) {
-    printf("setting FS root to: %s\n", path);
-    _root = path;
+void AlembicFS::setStat(struct stat* _stat)
+{
+    m_stat = _stat;
 }
 
-int AlembicFS::getattr(const char *path, struct stat *statbuf) {
-    char fullPath[PATH_MAX];
-    absPath(fullPath, path);
-    printf("getattr(%s)\n", fullPath);
-    return RETURN_ERRNO(lstat(fullPath, statbuf));
+void AlembicFS::setRootDir(const char *path)
+{
+    printf("setting FS root to: %s\n", path);
+    m_root = path;
+}
+
+int AlembicFS::getattr(const char *path, struct stat *statbuf)
+{
+    printf("getattr(%s)\n", path);
+    statbuf->st_dev = m_stat->st_dev;
+    statbuf->st_ino = m_stat->st_ino;
+    statbuf->st_mode = S_IFDIR | S_IRUSR;
+    statbuf->st_nlink = m_stat->st_nlink;
+    statbuf->st_uid = m_stat->st_uid;
+    statbuf->st_gid = m_stat->st_gid;
+    statbuf->st_rdev = m_stat->st_rdev;
+    statbuf->st_size = m_stat->st_size;
+    statbuf->st_blksize = m_stat->st_blksize;
+    statbuf->st_blocks = m_stat->st_blocks;
+    statbuf->st_atime = m_stat->st_atime;
+    statbuf->st_mtime = m_stat->st_mtime;
+    statbuf->st_ctime = m_stat->st_ctime;
+
+    return 0;
 }
 
 int AlembicFS::readlink(const char *path, char *link, size_t size) {
