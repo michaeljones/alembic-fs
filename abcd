@@ -1,0 +1,24 @@
+#!/bin/tcsh -f
+
+
+
+set abc=$1
+
+set dir=${abc}d
+
+mkdir $dir
+$HOME/projects/alembic-fs/bin/alembic-fs -s $dir
+
+cd $dir
+
+tcsh
+
+cd -
+
+fusermount -u $dir
+
+rmdir $dir
+
+
+
+

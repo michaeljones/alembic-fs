@@ -1,4 +1,5 @@
 #include "wrap.hh"
+#include "AlembicFS.hh"
 
 #include <fuse.h>
 #include <stdio.h>
@@ -40,6 +41,8 @@ int main(int argc, char *argv[])
     alembicfs_oper.init = wrap_init;
 
     printf("mounting file system...\n");
+
+    AlembicFS::Instance()->setRootDir("/");
 
     int fuse_stat = fuse_main(argc, argv, &alembicfs_oper, NULL);
 

@@ -20,7 +20,7 @@ obj/AlembicFS.o: obj AlembicFS.cc AlembicFS.hh
 	g++ -g $(CFLAGS) -c AlembicFS.cc -o obj/AlembicFS.o
 
 obj/main.o: obj main.c wrap.hh
-	gcc -g $(CFLAGS) -c main.c -o obj/main.o
+	g++ -g $(CFLAGS) -c main.c -o obj/main.o
 
 obj/wrap.o: obj wrap.cc wrap.hh AlembicFS.hh
 	g++ -g $(CFLAGS) -c wrap.cc -o obj/wrap.o

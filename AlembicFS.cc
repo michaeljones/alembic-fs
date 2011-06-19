@@ -20,6 +20,7 @@ AlembicFS::~AlembicFS() {
 }
 
 void AlembicFS::absPath(char dest[PATH_MAX], const char *path) {
+
     strcpy(dest, _root);
     strncat(dest, path, PATH_MAX);
     //printf("translated path: %s to %s\n", path, dest);
