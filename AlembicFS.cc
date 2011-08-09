@@ -1,5 +1,7 @@
 #include "AlembicFS.hh"
 
+#include <boost/algorithm/string.hpp>
+
 AlembicFS* AlembicFS::_instance = NULL;
 
 #define RETURN_ERRNO(x) (x) == 0 ? 0 : -errno
@@ -19,6 +21,9 @@ AlembicFS::~AlembicFS() {
 
 }
 
+//
+// Additional Methods
+//
 void AlembicFS::absPath(char dest[PATH_MAX], const char *path)
 {
     strcpy(dest, m_root);
@@ -47,9 +52,50 @@ void AlembicFS::setRootDir(const char *path)
     m_root = path;
 }
 
-int AlembicFS::getattr(const char *path, struct stat *statbuf)
+Alembic::AbcGeom::IObject AlembicFS::getObjectFromPath( const char* path )
+{
+    std::string path_ = path;
+
+    Alembic::AbcGeom::IObject iObj = m_archive->getTop();
+
+    if ( path_ == "/" )
+    {
+        return iObj;
+    }
+
+    std::vector< std::string > strs;
+    std::string delimiter = "/";
+    std::string subpath = path_.substr( 1 );
+    boost::split( strs, subpath, boost::is_any_of( delimiter ) );
+
+    for ( uint32_t i=0; i < strs.size(); ++i )
+    {
+        iObj = iObj.getChild( strs[ i ] );
+        if ( ! iObj.valid() )
+        {
+            break;
+        }
+    }
+
+    return iObj;
+}
+
+//
+//  Core Filesystem Methods
+//
+int AlembicFS::getattr( const char *path, struct stat *statbuf )
 {
     printf("getattr(%s)\n", path);
+
+    Alembic::AbcGeom::IObject iObj = getObjectFromPath( path );
+
+    if ( ! iObj.valid() )
+    {
+        // No entry matching path
+        //
+        return -ENOENT;
+    }
+
     statbuf->st_dev = m_stat->st_dev;
     statbuf->st_ino = m_stat->st_ino;
     statbuf->st_mode = S_IFDIR | S_IRUSR;

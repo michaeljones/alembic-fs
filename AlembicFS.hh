@@ -76,6 +76,7 @@ private:
     Alembic::AbcGeom::IArchive* m_archive;
 
     void absPath(char dest[PATH_MAX], const char *path);
+    Alembic::AbcGeom::IObject getObjectFromPath( const char* path );
 };
 
 
