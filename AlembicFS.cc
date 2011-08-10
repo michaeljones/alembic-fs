@@ -281,22 +281,24 @@ int AlembicFS::readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_
 {
     printf("readdir(path=%s, offset=%d)\n", path, (int)offset);
 
+    Alembic::AbcGeom::IObject iObj = getObjectFromPath( path );
+
+    if ( ! iObj.valid() )
+    {
+        // No entry matching path
+        //
+        return -ENOENT;
+    }
+
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
 
-    // If we're in the root grab the root object
+    // Add an entry for each child
     //
-    if ( ! strcmp( path, "/" ) )
+    for ( size_t i = 0 ; i < iObj.getNumChildren() ; i++ )
     {
-        Alembic::AbcGeom::IObject iObj = m_archive->getTop();
-
-        // Add an entry for each child
-        //
-        for ( size_t i = 0 ; i < iObj.getNumChildren() ; i++ )
-        {
-            const char* name = iObj.getChildHeader( i ).getName().c_str();
-            filler(buf, name, NULL, 0);
-        }
+        const char* name = iObj.getChildHeader( i ).getName().c_str();
+        filler(buf, name, NULL, 0);
     }
 
     return 0;
