@@ -4,6 +4,7 @@
 
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
+#include <Alembic/AbcCoreAbstract/All.h>
 
 #include <ctype.h>
 #include <dirent.h>
@@ -76,8 +77,39 @@ private:
     std::string m_path;
     Alembic::AbcGeom::IArchive* m_archive;
 
+private:
+
+    enum Classification
+    {
+        kObject = 0,
+        kProperties,
+        kProperty
+    };
+
+    struct ClassifiedObject
+    {
+        ClassifiedObject( Alembic::AbcGeom::IObject _iObj, Classification _classification )
+         : iObj( _iObj ), classification( _classification ) {}
+
+        ClassifiedObject(
+                Alembic::AbcGeom::IObject _iObj,
+                Classification _classification,
+                std::vector< std::string >& _remainder
+                )
+         : iObj( _iObj ),
+           classification( _classification ),
+           remainder( _remainder ) {}
+
+        Alembic::AbcGeom::IObject iObj;
+        Classification classification;
+        std::vector< std::string > remainder;
+    };
+
+private:
+
     void absPath(char dest[PATH_MAX], const char *path);
-    Alembic::AbcGeom::IObject getObjectFromPath( const char* path );
+    ClassifiedObject getObjectFromPath( const char* path );
+
 };
 
 

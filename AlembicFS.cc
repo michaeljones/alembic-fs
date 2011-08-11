@@ -54,7 +54,7 @@ void AlembicFS::setRootDir(const char *path)
     m_root = path;
 }
 
-Alembic::AbcGeom::IObject AlembicFS::getObjectFromPath( const char* path )
+AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
 {
     std::string path_ = path;
 
@@ -62,7 +62,7 @@ Alembic::AbcGeom::IObject AlembicFS::getObjectFromPath( const char* path )
 
     if ( path_ == "/" )
     {
-        return iObj;
+        return ClassifiedObject( iObj, kObject );
     }
 
     std::vector< std::string > strs;
@@ -72,14 +72,27 @@ Alembic::AbcGeom::IObject AlembicFS::getObjectFromPath( const char* path )
 
     for ( uint32_t i=0; i < strs.size(); ++i )
     {
-        iObj = iObj.getChild( strs[ i ] );
-        if ( ! iObj.valid() )
+        if ( strs[ i ] == "properties" )
         {
-            break;
+            if ( i == strs.size() - 1 )
+            {
+                return ClassifiedObject( iObj, kProperties );
+            }
+
+            std::vector< std::string > remainder( strs.begin() + i, strs.end() );
+            return ClassifiedObject( iObj, kProperty, remainder );
+        }
+        else
+        {
+            iObj = iObj.getChild( strs[ i ] );
+            if ( ! iObj.valid() )
+            {
+                break;
+            }
         }
     }
 
-    return iObj;
+    return ClassifiedObject( iObj, kObject );
 }
 
 //
@@ -89,18 +102,15 @@ int AlembicFS::getattr( const char *path, struct stat *statbuf )
 {
     printf("getattr(%s)\n", path);
 
-    Alembic::AbcGeom::IObject iObj = getObjectFromPath( path );
+    ClassifiedObject cObj = getObjectFromPath( path );
 
-    if ( ! iObj.valid() )
+    if ( ! cObj.iObj.valid() )
     {
-        // No entry matching path
-        //
         return -ENOENT;
     }
 
     statbuf->st_dev = m_stat->st_dev;
     statbuf->st_ino = m_stat->st_ino;
-    statbuf->st_mode = S_IFDIR | S_IRUSR;
     statbuf->st_nlink = m_stat->st_nlink;
     statbuf->st_uid = m_stat->st_uid;
     statbuf->st_gid = m_stat->st_gid;
@@ -111,6 +121,21 @@ int AlembicFS::getattr( const char *path, struct stat *statbuf )
     statbuf->st_atime = m_stat->st_atime;
     statbuf->st_mtime = m_stat->st_mtime;
     statbuf->st_ctime = m_stat->st_ctime;
+
+    switch ( cObj.classification )
+    {
+        case kObject:
+        case kProperties:
+        {
+            statbuf->st_mode = S_IFDIR | S_IRUSR;
+            break;
+        }
+        case kProperty:
+        {
+            statbuf->st_mode = S_IFREG | S_IRUSR;
+            break;
+        }
+    }
 
     return 0;
 }
@@ -279,28 +304,60 @@ int AlembicFS::removexattr(const char *path, const char *name) {
     return RETURN_ERRNO(lremovexattr(fullPath, name));
 }
 
-int AlembicFS::readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo)
+int AlembicFS::readdir(
+        const char *path,
+        void *buf,
+        fuse_fill_dir_t filler,
+        off_t offset,
+        struct fuse_file_info *fileInfo
+        )
 {
     printf("readdir(path=%s, offset=%d)\n", path, (int)offset);
 
-    Alembic::AbcGeom::IObject iObj = getObjectFromPath( path );
+    ClassifiedObject cObj = getObjectFromPath( path );
 
-    if ( ! iObj.valid() )
+    if ( ! cObj.iObj.valid() )
     {
-        // No entry matching path
-        //
         return -ENOENT;
     }
 
-    filler(buf, ".", NULL, 0);
-    filler(buf, "..", NULL, 0);
-
-    // Add an entry for each child
+    // Should be a switch statement
     //
-    for ( size_t i = 0 ; i < iObj.getNumChildren() ; i++ )
+    if ( cObj.classification == kObject )
     {
-        const char* name = iObj.getChildHeader( i ).getName().c_str();
-        filler(buf, name, NULL, 0);
+        filler(buf, ".", NULL, 0);
+        filler(buf, "..", NULL, 0);
+
+        // Add an entry for each child
+        //
+        for ( size_t i = 0 ; i < cObj.iObj.getNumChildren() ; i++ )
+        {
+            const char* name = cObj.iObj.getChildHeader( i ).getName().c_str();
+            filler(buf, name, NULL, 0);
+        }
+
+        // Add an entry for properties
+        //
+        Alembic::AbcGeom::ICompoundProperty properties = cObj.iObj.getProperties();
+        if ( properties.getNumProperties() )
+        {
+            filler(buf, "properties", NULL, 0);
+        }
+    }
+    else if ( cObj.classification == kProperties )
+    {
+        filler(buf, ".", NULL, 0);
+        filler(buf, "..", NULL, 0);
+
+        Alembic::AbcGeom::ICompoundProperty properties = cObj.iObj.getProperties();
+
+        for ( uint32_t p = 0; p < properties.getNumProperties(); ++p )
+        {
+            Alembic::AbcCoreAbstract::PropertyHeader header = properties.getPropertyHeader( p );
+            const std::string& name = header.getName();
+
+            filler(buf, name.c_str(), NULL, 0);
+        }
     }
 
     return 0;
