@@ -38,6 +38,8 @@ void AlembicFS::setStat(struct stat* _stat)
 
 void AlembicFS::setFile(const char* path)
 {
+    m_path = path;
+
     m_archive = new Alembic::AbcGeom::IArchive(
             Alembic::AbcCoreHDF5::ReadArchive(),
             path,
@@ -256,11 +258,11 @@ int AlembicFS::setxattr(const char *path, const char *name, const char *value, s
     return RETURN_ERRNO(lsetxattr(fullPath, name, value, size, flags));
 }
 
-int AlembicFS::getxattr(const char *path, const char *name, char *value, size_t size) {
-    printf("getxattr(path=%s, name=%s, size=%d\n", path, name, (int)size);
-    char fullPath[PATH_MAX];
-    absPath(fullPath, path);
-    return RETURN_ERRNO(getxattr(fullPath, name, value, size));
+int AlembicFS::getxattr(const char *path, const char *name, char *value, size_t size)
+{
+    // Redirect to built-in getxattr called with path to the original alembic file
+    //
+    return RETURN_ERRNO( ::getxattr( m_path.c_str(), name, value, size ) );
 }
 
 int AlembicFS::listxattr(const char *path, char *list, size_t size) {

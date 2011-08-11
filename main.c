@@ -41,17 +41,16 @@ int main(int argc, char *argv[])
 
     printf("mounting file system...\n");
 
-    // Set our root - is this needed?
-    AlembicFS::Instance()->setRootDir("/");
-
     // Stat the alembic file to give us some base information to work with
     //
     const char* path = argv[argc-1];
     --argc;
     struct stat abcStat;
     lstat(path, &abcStat);
-    AlembicFS::Instance()->setStat( &abcStat );
 
+    // Set our root - is this needed?
+    AlembicFS::Instance()->setRootDir("/");
+    AlembicFS::Instance()->setStat( &abcStat );
     AlembicFS::Instance()->setFile( path );
 
     int fuse_stat = fuse_main(argc, argv, &alembicfs_oper, NULL);

@@ -73,6 +73,7 @@ private:
 
     const char* m_root;
     struct stat* m_stat;
+    std::string m_path;
     Alembic::AbcGeom::IArchive* m_archive;
 
     void absPath(char dest[PATH_MAX], const char *path);
