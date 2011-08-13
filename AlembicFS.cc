@@ -2,6 +2,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <sstream>
+
 AlembicFS* AlembicFS::_instance = NULL;
 
 #define RETURN_ERRNO(x) (x) == 0 ? 0 : -errno
@@ -79,7 +81,9 @@ AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
                 return ClassifiedObject( iObj, kProperties );
             }
 
-            std::vector< std::string > remainder( strs.begin() + i, strs.end() );
+            // Create vector with remainder (skipping the "properties" entry
+            //
+            std::vector< std::string > remainder( strs.begin() + i + 1, strs.end() );
             return ClassifiedObject( iObj, kProperty, remainder );
         }
         else
@@ -95,6 +99,45 @@ AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
     return ClassifiedObject( iObj, kObject );
 }
 
+
+AlembicFS::PropertyData AlembicFS::getPropertyDataFromPath(
+        Alembic::AbcGeom::IObject iObj,
+        const std::vector< std::string >& path
+        )
+{
+    // Assume no hierarchy for the for the moment
+    //
+    Alembic::AbcGeom::ICompoundProperty parent = iObj.getProperties();
+
+    std::vector< std::string >::const_iterator it = path.begin();
+    std::vector< std::string >::const_iterator end = path.end();
+
+    const Alembic::AbcCoreAbstract::PropertyHeader* property = NULL;
+
+    for ( ; it != end; ++it )
+    {
+        if ( property && property->isCompound() )
+        {
+            parent = Alembic::AbcGeom::ICompoundProperty( parent, property->getName() );
+        }
+
+        property = parent.getPropertyHeader( *it );
+
+        if ( ! property )
+        {
+            return PropertyData( NULL, parent );
+        }
+
+        if ( ! property->isCompound() )
+        {
+            return PropertyData( property, parent );
+        }
+    }
+
+    return PropertyData( property, parent );
+}
+
+
 //
 //  Core Filesystem Methods
 //
@@ -109,18 +152,7 @@ int AlembicFS::getattr( const char *path, struct stat *statbuf )
         return -ENOENT;
     }
 
-    statbuf->st_dev = m_stat->st_dev;
-    statbuf->st_ino = m_stat->st_ino;
-    statbuf->st_nlink = m_stat->st_nlink;
-    statbuf->st_uid = m_stat->st_uid;
-    statbuf->st_gid = m_stat->st_gid;
-    statbuf->st_rdev = m_stat->st_rdev;
     statbuf->st_size = m_stat->st_size;
-    statbuf->st_blksize = m_stat->st_blksize;
-    statbuf->st_blocks = m_stat->st_blocks;
-    statbuf->st_atime = m_stat->st_atime;
-    statbuf->st_mtime = m_stat->st_mtime;
-    statbuf->st_ctime = m_stat->st_ctime;
 
     switch ( cObj.classification )
     {
@@ -128,14 +160,54 @@ int AlembicFS::getattr( const char *path, struct stat *statbuf )
         case kProperties:
         {
             statbuf->st_mode = S_IFDIR | S_IRUSR;
+            statbuf->st_size = 4096;
             break;
         }
         case kProperty:
         {
-            statbuf->st_mode = S_IFREG | S_IRUSR;
+            PropertyData propertyData = getPropertyDataFromPath(
+                    cObj.iObj,
+                    cObj.remainder
+                    );
+
+            if ( ! propertyData.header )
+            {
+                return -ENOENT;
+            }
+
+            switch( propertyData.header->getPropertyType() )
+            {
+                case Alembic::AbcCoreAbstract::kCompoundProperty:
+                {
+                    statbuf->st_mode = S_IFDIR | S_IRUSR;
+                    statbuf->st_size = 4096;
+                    break;
+                }
+                case Alembic::AbcCoreAbstract::kScalarProperty:
+                case Alembic::AbcCoreAbstract::kArrayProperty:
+                {
+                    statbuf->st_mode = S_IFREG | S_IRUSR;
+                    statbuf->st_size = 4096;
+                    break;
+                }
+            }
             break;
         }
     }
+
+    // Fill in the rest of the stat data from the initial stat we did on the abc file
+    //
+    statbuf->st_dev = m_stat->st_dev;
+    statbuf->st_ino = m_stat->st_ino;
+    statbuf->st_nlink = m_stat->st_nlink;
+    statbuf->st_uid = m_stat->st_uid;
+    statbuf->st_gid = m_stat->st_gid;
+    statbuf->st_rdev = m_stat->st_rdev;
+    statbuf->st_blksize = m_stat->st_blksize;
+    statbuf->st_blocks = m_stat->st_blocks;
+    statbuf->st_atime = m_stat->st_atime;
+    statbuf->st_mtime = m_stat->st_mtime;
+    statbuf->st_ctime = m_stat->st_ctime;
 
     return 0;
 }
@@ -228,17 +300,103 @@ int AlembicFS::utime(const char *path, struct utimbuf *ubuf) {
     return RETURN_ERRNO(utime(fullPath, ubuf));
 }
 
-int AlembicFS::open(const char *path, struct fuse_file_info *fileInfo) {
+int AlembicFS::open(const char *path, struct fuse_file_info *fileInfo)
+{
     printf("open(path=%s)\n", path);
-    char fullPath[PATH_MAX];
-    absPath(fullPath, path);
-    fileInfo->fh = ::open(fullPath, fileInfo->flags);
     return 0;
 }
 
-int AlembicFS::read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
+int AlembicFS::read(
+        const char *path,
+        char *buf,
+        size_t size,
+        off_t offset,
+        struct fuse_file_info *fileInfo
+        )
+{
     printf("read(path=%s, size=%d, offset=%d)\n", path, (int)size, (int)offset);
-    return RETURN_ERRNO(pread(fileInfo->fh, buf, size, offset));
+
+    ClassifiedObject cObj = getObjectFromPath( path );
+    if ( ! cObj.iObj.valid() )
+    {
+        return -ENOENT;
+    }
+
+    PropertyData propertyData = getPropertyDataFromPath(
+            cObj.iObj,
+            cObj.remainder
+            );
+
+    if ( ! propertyData.header )
+    {
+        return -ENOENT;
+    }
+
+    switch( propertyData.header->getPropertyType() )
+    {
+        case Alembic::AbcCoreAbstract::kCompoundProperty:
+        {
+            return -EISDIR;
+        }
+        case Alembic::AbcCoreAbstract::kScalarProperty:
+        {
+            const Alembic::AbcCoreAbstract::DataType& dataType = propertyData.header->getDataType();
+
+            switch ( dataType.getPod() )
+            {
+                case Alembic::Util::kBooleanPOD:
+                {
+                    Alembic::Abc::IBoolProperty boolProperty(
+                            propertyData.parent,
+                            propertyData.header->getName()
+                            );
+
+                    bool value = boolProperty.getValue();
+
+                    std::ostringstream stream;
+                    stream << std::boolalpha << value << std::endl;;
+
+                    sprintf( buf, "%s", stream.str().c_str() );
+
+                    return stream.str().size();
+                }
+                case Alembic::Util::kFloat64POD:
+                {
+                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
+                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty(
+                            propertyData.header->getName()
+                            );
+
+                    std::vector< Alembic::Util::float64_t > data( dataType.getExtent() );
+
+                    vals->asScalarPtr()->getSample( 0, &(data.front()) );
+
+                    std::ostringstream stream;
+
+                    for ( uint32_t i = 0; i < dataType.getExtent(); ++i )
+                    {
+                        stream << data[ i ] << " ";
+                    }
+
+                    stream << std::endl;
+
+                    sprintf( buf, "%s", stream.str().c_str() );
+
+                    return stream.str().size();
+                }
+                default:
+                {
+                    break;
+                }
+            }
+        }
+        case Alembic::AbcCoreAbstract::kArrayProperty:
+        {
+
+        }
+    }
+
+    return 0;
 }
 
 int AlembicFS::write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
@@ -353,7 +511,34 @@ int AlembicFS::readdir(
 
         for ( uint32_t p = 0; p < properties.getNumProperties(); ++p )
         {
-            Alembic::AbcCoreAbstract::PropertyHeader header = properties.getPropertyHeader( p );
+            const Alembic::AbcCoreAbstract::PropertyHeader& header =
+                properties.getPropertyHeader( p);
+            const std::string& name = header.getName();
+
+            filler(buf, name.c_str(), NULL, 0);
+        }
+    }
+    else if ( cObj.classification == kProperty )
+    {
+        PropertyData propertyData = getPropertyDataFromPath(
+                cObj.iObj,
+                cObj.remainder
+                );
+
+        if ( ! propertyData.header || ! propertyData.header->isCompound() )
+        {
+            return -ENOENT;
+        }
+
+        Alembic::AbcGeom::ICompoundProperty property(
+                propertyData.parent,
+                propertyData.header->getName()
+                );
+
+        for ( uint32_t p = 0; p < property.getNumProperties(); ++p )
+        {
+            const Alembic::AbcCoreAbstract::PropertyHeader& header =
+                property.getPropertyHeader( p);
             const std::string& name = header.getName();
 
             filler(buf, name.c_str(), NULL, 0);

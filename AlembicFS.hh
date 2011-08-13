@@ -105,11 +105,28 @@ private:
         std::vector< std::string > remainder;
     };
 
+    struct PropertyData
+    {
+        PropertyData(
+                const Alembic::AbcCoreAbstract::PropertyHeader* header_,
+                Alembic::AbcGeom::ICompoundProperty parent_
+                )
+         : header( header_ ),
+           parent( parent_ ) {}
+
+        const Alembic::AbcCoreAbstract::PropertyHeader* header;
+        Alembic::AbcGeom::ICompoundProperty parent;
+    };
+
 private:
 
     void absPath(char dest[PATH_MAX], const char *path);
     ClassifiedObject getObjectFromPath( const char* path );
 
+    PropertyData getPropertyDataFromPath(
+            Alembic::AbcGeom::IObject iObj,
+            const std::vector< std::string >& path
+            );
 };
 
 
