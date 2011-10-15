@@ -50,4 +50,5 @@ Credits
 Thank you to:
 
 - `The Alembic team <http://alembic.io>`_
+- `fuse-examplefs <http://code.google.com/p/fuse-examplefs/>`_
 
