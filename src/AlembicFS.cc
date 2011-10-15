@@ -424,19 +424,12 @@ int AlembicFS::read(
             {
                 case Alembic::Util::kBooleanPOD:
                 {
-                    Alembic::Abc::IBoolProperty boolProperty(
-                            propertyData.parent,
-                            propertyData.header->getName()
+                    return readScalarProperty< Alembic::Util::bool_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName(),
+                            dataType.getExtent()
                             );
-
-                    bool value = boolProperty.getValue();
-
-                    std::ostringstream stream;
-                    stream << std::boolalpha << value << std::endl;;
-
-                    sprintf( buf, "%s", stream.str().c_str() );
-
-                    return stream.str().size();
                 }
                 case Alembic::Util::kUint8POD:
                 {
@@ -495,6 +488,14 @@ int AlembicFS::read(
 
             switch ( dataType.getPod() )
             {
+                case Alembic::Util::kBooleanPOD:
+                {
+                    return readArrayProperty< Alembic::Util::bool_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
                 case Alembic::Util::kInt8POD:
                 {
                     return readArrayProperty< Alembic::Util::int8_t >(
