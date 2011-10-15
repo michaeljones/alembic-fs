@@ -360,6 +360,54 @@ int AlembicFS::read(
 
                     return stream.str().size();
                 }
+                case Alembic::Util::kUint8POD:
+                {
+                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
+                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty(
+                            propertyData.header->getName()
+                            );
+
+                    std::vector< Alembic::Util::uint8_t > data( dataType.getExtent() );
+
+                    vals->asScalarPtr()->getSample( 0, &(data.front()) );
+
+                    std::ostringstream stream;
+
+                    for ( uint32_t i = 0; i < dataType.getExtent(); ++i )
+                    {
+                        stream << uint32_t(data[ i ]) << " ";
+                    }
+
+                    stream << std::endl;
+
+                    sprintf( buf, "%s", stream.str().c_str() );
+
+                    return stream.str().size();
+                }
+                case Alembic::Util::kUint32POD:
+                {
+                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
+                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty(
+                            propertyData.header->getName()
+                            );
+
+                    std::vector< Alembic::Util::uint32_t > data( dataType.getExtent() );
+
+                    vals->asScalarPtr()->getSample( 0, &(data.front()) );
+
+                    std::ostringstream stream;
+
+                    for ( uint32_t i = 0; i < dataType.getExtent(); ++i )
+                    {
+                        stream << data[ i ] << " ";
+                    }
+
+                    stream << std::endl;
+
+                    sprintf( buf, "%s", stream.str().c_str() );
+
+                    return stream.str().size();
+                }
                 case Alembic::Util::kFloat64POD:
                 {
                     Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
