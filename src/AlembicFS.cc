@@ -313,6 +313,12 @@ struct OutputTrait
 };
 
 template<>
+struct OutputTrait< Alembic::Util::int8_t >
+{
+    typedef int32_t output_type;
+};
+
+template<>
 struct OutputTrait< Alembic::Util::uint8_t >
 {
     typedef uint32_t output_type;
@@ -368,7 +374,7 @@ int readArrayProperty(
 
     for ( size_t i = 0; i < numVals; ++i )
     {
-        stream << data[ i ] << " ";
+        stream << typename OutputTrait< TYPE >::output_type( data[ i ] ) << " ";
     }
 
     stream << std::endl;
@@ -489,6 +495,38 @@ int AlembicFS::read(
 
             switch ( dataType.getPod() )
             {
+                case Alembic::Util::kInt8POD:
+                {
+                    return readArrayProperty< Alembic::Util::int8_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
+                case Alembic::Util::kUint8POD:
+                {
+                    return readArrayProperty< Alembic::Util::uint8_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
+                case Alembic::Util::kInt16POD:
+                {
+                    return readArrayProperty< Alembic::Util::int16_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
+                case Alembic::Util::kUint16POD:
+                {
+                    return readArrayProperty< Alembic::Util::uint16_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
                 case Alembic::Util::kInt32POD:
                 {
                     return readArrayProperty< Alembic::Util::int32_t >(
@@ -505,9 +543,41 @@ int AlembicFS::read(
                             propertyData.header->getName()
                             );
                 }
+                case Alembic::Util::kInt64POD:
+                {
+                    return readArrayProperty< Alembic::Util::int64_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
+                case Alembic::Util::kUint64POD:
+                {
+                    return readArrayProperty< Alembic::Util::uint64_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
+                case Alembic::Util::kFloat16POD:
+                {
+                    return readArrayProperty< Alembic::Util::float16_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
                 case Alembic::Util::kFloat32POD:
                 {
                     return readArrayProperty< Alembic::Util::float32_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName()
+                            );
+                }
+                case Alembic::Util::kFloat64POD:
+                {
+                    return readArrayProperty< Alembic::Util::float64_t >(
                             buf,
                             propertyData.parent.getPtr(),
                             propertyData.header->getName()
