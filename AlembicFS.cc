@@ -442,7 +442,93 @@ int AlembicFS::read(
         }
         case Alembic::AbcCoreAbstract::kArrayProperty:
         {
+            const Alembic::AbcCoreAbstract::DataType& dataType = propertyData.header->getDataType();
 
+            switch ( dataType.getPod() )
+            {
+                case Alembic::Util::kInt32POD:
+                {
+                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
+                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
+                            propertyData.header->getName()
+                            );
+
+                    Alembic::Abc::ArraySamplePtr arraySamplePtr;
+                    vals->asArrayPtr()->getSample( 0, arraySamplePtr );
+
+                    size_t numVals = arraySamplePtr->getDimensions().numPoints();
+                    int32_t* data = (int32_t *)(arraySamplePtr->getData());
+
+                    std::ostringstream stream;
+
+                    for ( size_t i = 0; i < numVals; ++i )
+                    {
+                        stream << data[ i ] << " ";
+                    }
+
+                    stream << std::endl;
+
+                    sprintf( buf, "%s", stream.str().c_str() );
+
+                    return stream.str().size();
+                }
+                case Alembic::Util::kUint32POD:
+                {
+                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
+                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
+                            propertyData.header->getName()
+                            );
+
+                    Alembic::Abc::ArraySamplePtr arraySamplePtr;
+                    vals->asArrayPtr()->getSample( 0, arraySamplePtr );
+
+                    size_t numVals = arraySamplePtr->getDimensions().numPoints();
+                    uint32_t* data = (uint32_t *)(arraySamplePtr->getData());
+
+                    std::ostringstream stream;
+
+                    for ( size_t i = 0; i < numVals; ++i )
+                    {
+                        stream << data[ i ] << " ";
+                    }
+
+                    stream << std::endl;
+
+                    sprintf( buf, "%s", stream.str().c_str() );
+
+                    return stream.str().size();
+                }
+                case Alembic::Util::kFloat32POD:
+                {
+                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
+                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
+                            propertyData.header->getName()
+                            );
+
+                    Alembic::Abc::ArraySamplePtr arraySamplePtr;
+                    vals->asArrayPtr()->getSample( 0, arraySamplePtr );
+
+                    size_t numVals = arraySamplePtr->getDimensions().numPoints();
+                    Alembic::Util::float32_t* data = (Alembic::Util::float32_t*)(arraySamplePtr->getData());
+
+                    std::ostringstream stream;
+
+                    for ( size_t i = 0; i < numVals; ++i )
+                    {
+                        stream << data[ i ] << " ";
+                    }
+
+                    stream << std::endl;
+
+                    sprintf( buf, "%s", stream.str().c_str() );
+
+                    return stream.str().size();
+                }
+                default:
+                {
+                    break;
+                }
+            }
         }
     }
 
