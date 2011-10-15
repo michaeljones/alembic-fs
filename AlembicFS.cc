@@ -306,6 +306,35 @@ int AlembicFS::open(const char *path, struct fuse_file_info *fileInfo)
     return 0;
 }
 
+template< typename TYPE, typename AS >
+int readType(
+        char *buf,
+        const Alembic::Abc::CompoundPropertyReaderPtr ptr,
+        const std::string& propertyName,
+        const Alembic::Abc::uint8_t extent
+        )
+{
+    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty( propertyName );
+
+    std::vector< TYPE > data( extent );
+
+    vals->asScalarPtr()->getSample( 0, &(data.front()) );
+
+    std::ostringstream stream;
+
+    for ( uint32_t i = 0; i < extent; ++i )
+    {
+        stream << AS(data[ i ]) << " ";
+    }
+
+    stream << std::endl;
+
+    sprintf( buf, "%s", stream.str().c_str() );
+
+    return stream.str().size();
+}
+
+
 int AlembicFS::read(
         const char *path,
         char *buf,
@@ -362,75 +391,30 @@ int AlembicFS::read(
                 }
                 case Alembic::Util::kUint8POD:
                 {
-                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
-                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty(
-                            propertyData.header->getName()
+                    return readType< Alembic::Util::uint8_t, uint32_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName(),
+                            dataType.getExtent()
                             );
-
-                    std::vector< Alembic::Util::uint8_t > data( dataType.getExtent() );
-
-                    vals->asScalarPtr()->getSample( 0, &(data.front()) );
-
-                    std::ostringstream stream;
-
-                    for ( uint32_t i = 0; i < dataType.getExtent(); ++i )
-                    {
-                        stream << uint32_t(data[ i ]) << " ";
-                    }
-
-                    stream << std::endl;
-
-                    sprintf( buf, "%s", stream.str().c_str() );
-
-                    return stream.str().size();
                 }
                 case Alembic::Util::kUint32POD:
                 {
-                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
-                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty(
-                            propertyData.header->getName()
+                    return readType< Alembic::Util::uint32_t, Alembic::Util::uint32_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName(),
+                            dataType.getExtent()
                             );
-
-                    std::vector< Alembic::Util::uint32_t > data( dataType.getExtent() );
-
-                    vals->asScalarPtr()->getSample( 0, &(data.front()) );
-
-                    std::ostringstream stream;
-
-                    for ( uint32_t i = 0; i < dataType.getExtent(); ++i )
-                    {
-                        stream << data[ i ] << " ";
-                    }
-
-                    stream << std::endl;
-
-                    sprintf( buf, "%s", stream.str().c_str() );
-
-                    return stream.str().size();
                 }
                 case Alembic::Util::kFloat64POD:
                 {
-                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
-                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty(
-                            propertyData.header->getName()
+                    return readType< Alembic::Util::float64_t, Alembic::Util::float64_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName(),
+                            dataType.getExtent()
                             );
-
-                    std::vector< Alembic::Util::float64_t > data( dataType.getExtent() );
-
-                    vals->asScalarPtr()->getSample( 0, &(data.front()) );
-
-                    std::ostringstream stream;
-
-                    for ( uint32_t i = 0; i < dataType.getExtent(); ++i )
-                    {
-                        stream << data[ i ] << " ";
-                    }
-
-                    stream << std::endl;
-
-                    sprintf( buf, "%s", stream.str().c_str() );
-
-                    return stream.str().size();
                 }
                 default:
                 {
