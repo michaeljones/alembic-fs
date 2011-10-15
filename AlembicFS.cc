@@ -398,9 +398,27 @@ int AlembicFS::read(
                             dataType.getExtent()
                             );
                 }
+                case Alembic::Util::kInt32POD:
+                {
+                    return readType< Alembic::Util::int32_t, Alembic::Util::int32_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName(),
+                            dataType.getExtent()
+                            );
+                }
                 case Alembic::Util::kUint32POD:
                 {
                     return readType< Alembic::Util::uint32_t, Alembic::Util::uint32_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
+                            propertyData.header->getName(),
+                            dataType.getExtent()
+                            );
+                }
+                case Alembic::Util::kFloat32POD:
+                {
+                    return readType< Alembic::Util::float32_t, Alembic::Util::float32_t >(
                             buf,
                             propertyData.parent.getPtr(),
                             propertyData.header->getName(),
