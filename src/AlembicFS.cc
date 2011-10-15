@@ -306,7 +306,19 @@ int AlembicFS::open(const char *path, struct fuse_file_info *fileInfo)
     return 0;
 }
 
-template< typename TYPE, typename AS >
+template< typename T >
+struct OutputTrait
+{
+    typedef T output_type;
+};
+
+template<>
+struct OutputTrait< Alembic::Util::uint8_t >
+{
+    typedef uint32_t output_type;
+};
+
+template< typename TYPE >
 int readScalarProperty(
         char *buf,
         const Alembic::Abc::CompoundPropertyReaderPtr ptr,
@@ -324,7 +336,7 @@ int readScalarProperty(
 
     for ( uint32_t i = 0; i < extent; ++i )
     {
-        stream << AS(data[ i ]) << " ";
+        stream << typename OutputTrait< TYPE >::output_type( data[ i ] ) << " ";
     }
 
     stream << std::endl;
@@ -422,7 +434,7 @@ int AlembicFS::read(
                 }
                 case Alembic::Util::kUint8POD:
                 {
-                    return readScalarProperty< Alembic::Util::uint8_t, uint32_t >(
+                    return readScalarProperty< Alembic::Util::uint8_t >(
                             buf,
                             propertyData.parent.getPtr(),
                             propertyData.header->getName(),
@@ -431,7 +443,7 @@ int AlembicFS::read(
                 }
                 case Alembic::Util::kInt32POD:
                 {
-                    return readScalarProperty< Alembic::Util::int32_t, Alembic::Util::int32_t >(
+                    return readScalarProperty< Alembic::Util::int32_t >(
                             buf,
                             propertyData.parent.getPtr(),
                             propertyData.header->getName(),
@@ -440,7 +452,7 @@ int AlembicFS::read(
                 }
                 case Alembic::Util::kUint32POD:
                 {
-                    return readScalarProperty< Alembic::Util::uint32_t, Alembic::Util::uint32_t >(
+                    return readScalarProperty< Alembic::Util::uint32_t >(
                             buf,
                             propertyData.parent.getPtr(),
                             propertyData.header->getName(),
@@ -449,7 +461,7 @@ int AlembicFS::read(
                 }
                 case Alembic::Util::kFloat32POD:
                 {
-                    return readScalarProperty< Alembic::Util::float32_t, Alembic::Util::float32_t >(
+                    return readScalarProperty< Alembic::Util::float32_t >(
                             buf,
                             propertyData.parent.getPtr(),
                             propertyData.header->getName(),
@@ -458,7 +470,7 @@ int AlembicFS::read(
                 }
                 case Alembic::Util::kFloat64POD:
                 {
-                    return readScalarProperty< Alembic::Util::float64_t, Alembic::Util::float64_t >(
+                    return readScalarProperty< Alembic::Util::float64_t >(
                             buf,
                             propertyData.parent.getPtr(),
                             propertyData.header->getName(),
