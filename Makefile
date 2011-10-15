@@ -1,12 +1,12 @@
 
 CFLAGS = -Wall -DFUSE_USE_VERSION=26 `pkg-config fuse --cflags` \
-		 -I$(TOOLS)/include/alembic/0.9.3b \
+		 -I$(TOOLS)/include/alembic/1.0.2 \
 		 -I$(TOOLS)/include/boost/1_44_0 \
 		 -I$(TOOLS)/include/OpenEXR \
 		 -I$(TOOLS)/include/hdf5/1_8_7 \
 
 LINKFLAGS = -Wall `pkg-config fuse --libs` \
-			-L$(TOOLS)/lib/alembic/0.9.3b/static \
+			-L$(TOOLS)/lib/alembic/1.0.2/static \
 			-L$(TOOLS)/lib/hdf5/1_8_7 \
 			-L$(TOOLS)/lib \
 			-lAlembicAbcGeom \
