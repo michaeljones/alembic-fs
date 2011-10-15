@@ -335,6 +335,37 @@ int readScalarProperty(
 }
 
 
+template< typename TYPE >
+int readArrayProperty(
+        char *buf,
+        const Alembic::Abc::CompoundPropertyReaderPtr ptr,
+        const std::string& propertyName
+        )
+{
+    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
+            propertyName
+            );
+
+    Alembic::Abc::ArraySamplePtr arraySamplePtr;
+    vals->asArrayPtr()->getSample( 0, arraySamplePtr );
+
+    size_t numVals = arraySamplePtr->getDimensions().numPoints();
+    TYPE* data = (TYPE *)(arraySamplePtr->getData());
+
+    std::ostringstream stream;
+
+    for ( size_t i = 0; i < numVals; ++i )
+    {
+        stream << data[ i ] << " ";
+    }
+
+    stream << std::endl;
+
+    sprintf( buf, "%s", stream.str().c_str() );
+
+    return stream.str().size();
+}
+
 int AlembicFS::read(
         const char *path,
         char *buf,
@@ -448,81 +479,27 @@ int AlembicFS::read(
             {
                 case Alembic::Util::kInt32POD:
                 {
-                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
-                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
+                    return readArrayProperty< Alembic::Util::int32_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
                             propertyData.header->getName()
                             );
-
-                    Alembic::Abc::ArraySamplePtr arraySamplePtr;
-                    vals->asArrayPtr()->getSample( 0, arraySamplePtr );
-
-                    size_t numVals = arraySamplePtr->getDimensions().numPoints();
-                    int32_t* data = (int32_t *)(arraySamplePtr->getData());
-
-                    std::ostringstream stream;
-
-                    for ( size_t i = 0; i < numVals; ++i )
-                    {
-                        stream << data[ i ] << " ";
-                    }
-
-                    stream << std::endl;
-
-                    sprintf( buf, "%s", stream.str().c_str() );
-
-                    return stream.str().size();
                 }
                 case Alembic::Util::kUint32POD:
                 {
-                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
-                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
+                    return readArrayProperty< Alembic::Util::uint32_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
                             propertyData.header->getName()
                             );
-
-                    Alembic::Abc::ArraySamplePtr arraySamplePtr;
-                    vals->asArrayPtr()->getSample( 0, arraySamplePtr );
-
-                    size_t numVals = arraySamplePtr->getDimensions().numPoints();
-                    uint32_t* data = (uint32_t *)(arraySamplePtr->getData());
-
-                    std::ostringstream stream;
-
-                    for ( size_t i = 0; i < numVals; ++i )
-                    {
-                        stream << data[ i ] << " ";
-                    }
-
-                    stream << std::endl;
-
-                    sprintf( buf, "%s", stream.str().c_str() );
-
-                    return stream.str().size();
                 }
                 case Alembic::Util::kFloat32POD:
                 {
-                    Alembic::Abc::CompoundPropertyReaderPtr ptr = propertyData.parent.getPtr();
-                    Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
+                    return readArrayProperty< Alembic::Util::float32_t >(
+                            buf,
+                            propertyData.parent.getPtr(),
                             propertyData.header->getName()
                             );
-
-                    Alembic::Abc::ArraySamplePtr arraySamplePtr;
-                    vals->asArrayPtr()->getSample( 0, arraySamplePtr );
-
-                    size_t numVals = arraySamplePtr->getDimensions().numPoints();
-                    Alembic::Util::float32_t* data = (Alembic::Util::float32_t*)(arraySamplePtr->getData());
-
-                    std::ostringstream stream;
-
-                    for ( size_t i = 0; i < numVals; ++i )
-                    {
-                        stream << data[ i ] << " ";
-                    }
-
-                    stream << std::endl;
-
-                    sprintf( buf, "%s", stream.str().c_str() );
-
-                    return stream.str().size();
                 }
                 default:
                 {
