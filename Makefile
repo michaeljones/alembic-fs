@@ -34,12 +34,12 @@ bin/alembic-fs: bin obj/AlembicFS.o obj/wrap.o obj/main.o
 obj:
 	mkdir -p obj
 
-obj/AlembicFS.o: obj AlembicFS.cc AlembicFS.hh
-	g++ $(CFLAGS) -c AlembicFS.cc -o obj/AlembicFS.o
+obj/AlembicFS.o: obj src/AlembicFS.cc src/AlembicFS.hh
+	g++ $(CFLAGS) -c src/AlembicFS.cc -o obj/AlembicFS.o
 
-obj/main.o: obj main.c wrap.hh
-	g++ $(CFLAGS) -c main.c -o obj/main.o
+obj/main.o: obj src/main.c src/wrap.hh
+	g++ $(CFLAGS) -c src/main.c -o obj/main.o
 
-obj/wrap.o: obj wrap.cc wrap.hh AlembicFS.hh
-	g++ $(CFLAGS) -c wrap.cc -o obj/wrap.o
+obj/wrap.o: obj src/wrap.cc src/wrap.hh src/AlembicFS.hh
+	g++ $(CFLAGS) -c src/wrap.cc -o obj/wrap.o
 
