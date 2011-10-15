@@ -6,11 +6,13 @@ This is an FUSE based filesystem view for Alembic files.
 Getting Started
 ---------------
 
-To build it, run::
+To build it, edit the Makefile to point at the appropriate locations on your
+system and run::
 
    make
 
-In the root directory.
+In the root directory. Apologies for not providing a portable Makefile, it is
+still early stages.
 
 Then run::
 
