@@ -86,6 +86,8 @@ private:
         kProperty
     };
 
+    typedef std::vector< std::string > PathSegments;
+
     struct ClassifiedObject
     {
         ClassifiedObject( Alembic::AbcGeom::IObject _iObj, Classification _classification )
@@ -94,7 +96,7 @@ private:
         ClassifiedObject(
                 Alembic::AbcGeom::IObject _iObj,
                 Classification _classification,
-                std::vector< std::string >& _remainder
+                PathSegments& _remainder
                 )
          : iObj( _iObj ),
            classification( _classification ),
@@ -102,7 +104,7 @@ private:
 
         Alembic::AbcGeom::IObject iObj;
         Classification classification;
-        std::vector< std::string > remainder;
+        PathSegments remainder;
     };
 
     struct PropertyData
@@ -114,8 +116,18 @@ private:
          : header( header_ ),
            parent( parent_ ) {}
 
+        PropertyData(
+                const Alembic::AbcCoreAbstract::PropertyHeader* header_,
+                Alembic::AbcGeom::ICompoundProperty parent_,
+                PathSegments& _remainder
+                )
+         : header( header_ ),
+           parent( parent_ ),
+           remainder( _remainder ) {}
+
         const Alembic::AbcCoreAbstract::PropertyHeader* header;
         Alembic::AbcGeom::ICompoundProperty parent;
+        PathSegments remainder;
     };
 
 private:
@@ -125,7 +137,7 @@ private:
 
     PropertyData getPropertyDataFromPath(
             Alembic::AbcGeom::IObject iObj,
-            const std::vector< std::string >& path
+            const PathSegments& path
             );
 };
 

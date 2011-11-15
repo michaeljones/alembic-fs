@@ -67,7 +67,7 @@ AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
         return ClassifiedObject( iObj, kObject );
     }
 
-    std::vector< std::string > strs;
+    PathSegments strs;
     std::string delimiter = "/";
     std::string subpath = path_.substr( 1 );
     boost::split( strs, subpath, boost::is_any_of( delimiter ) );
@@ -81,9 +81,9 @@ AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
                 return ClassifiedObject( iObj, kProperties );
             }
 
-            // Create vector with remainder (skipping the "properties" entry
+            // Create vector with remainder of the path after the "properties" level
             //
-            std::vector< std::string > remainder( strs.begin() + i + 1, strs.end() );
+            PathSegments remainder( strs.begin() + i + 1, strs.end() );
             return ClassifiedObject( iObj, kProperty, remainder );
         }
         else
@@ -102,15 +102,24 @@ AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
 
 AlembicFS::PropertyData AlembicFS::getPropertyDataFromPath(
         Alembic::AbcGeom::IObject iObj,
-        const std::vector< std::string >& path
+        const PathSegments& path
         )
 {
-    // Assume no hierarchy for the for the moment
+    // Get the base compound property for the object which contains all the object's properties
     //
     Alembic::AbcGeom::ICompoundProperty parent = iObj.getProperties();
 
-    std::vector< std::string >::const_iterator it = path.begin();
-    std::vector< std::string >::const_iterator end = path.end();
+    // Iterate over the property part of the path (which is the only part we have at this point.) If
+    // the full path was:
+    //
+    //    /object1/object2/properties/compound1/compound2/scalarproperty
+    //
+    // Then here we have and iterate over:
+    //
+    //    compound1/compound2/scalarproperty
+    //
+    PathSegments::const_iterator it = path.begin();
+    PathSegments::const_iterator end = path.end();
 
     const Alembic::AbcCoreAbstract::PropertyHeader* property = NULL;
 
@@ -130,7 +139,10 @@ AlembicFS::PropertyData AlembicFS::getPropertyDataFromPath(
 
         if ( ! property->isCompound() )
         {
-            return PropertyData( property, parent );
+            // Copy the remained of the path after this non-compound property we've found
+            //
+            PathSegments remainder( it + 1, path.end() );
+            return PropertyData( property, parent, remainder );
         }
     }
 
@@ -175,23 +187,37 @@ int AlembicFS::getattr( const char *path, struct stat *statbuf )
                 return -ENOENT;
             }
 
-            switch( propertyData.header->getPropertyType() )
+            // If there is no remainder then handle the property directly
+            //
+            if ( ! propertyData.remainder.size() )
             {
-                case Alembic::AbcCoreAbstract::kCompoundProperty:
+                switch( propertyData.header->getPropertyType() )
                 {
-                    statbuf->st_mode = S_IFDIR | S_IRUSR;
-                    statbuf->st_size = 4096;
-                    break;
+                    // All property types are shown as directories
+                    //
+                    case Alembic::AbcCoreAbstract::kCompoundProperty:
+                    case Alembic::AbcCoreAbstract::kScalarProperty:
+                    case Alembic::AbcCoreAbstract::kArrayProperty:
+                    {
+                        statbuf->st_mode = S_IFDIR | S_IRUSR;
+                        statbuf->st_size = 4096;
+                        break;
+                    }
                 }
-                case Alembic::AbcCoreAbstract::kScalarProperty:
-                case Alembic::AbcCoreAbstract::kArrayProperty:
+            }
+            // Else handle the contents of the property directory
+            else
+            {
+                if ( propertyData.remainder[ 0 ] == "values" )
                 {
                     statbuf->st_mode = S_IFREG | S_IRUSR;
                     statbuf->st_size = 4096;
-                    break;
+                }
+                else
+                {
+                    return -ENOENT;
                 }
             }
-            break;
         }
     }
 
@@ -410,183 +436,186 @@ int AlembicFS::read(
         return -ENOENT;
     }
 
-    switch( propertyData.header->getPropertyType() )
+    if ( propertyData.remainder[ 0 ] == "values" )
     {
-        case Alembic::AbcCoreAbstract::kCompoundProperty:
+        switch( propertyData.header->getPropertyType() )
         {
-            return -EISDIR;
-        }
-        case Alembic::AbcCoreAbstract::kScalarProperty:
-        {
-            const Alembic::AbcCoreAbstract::DataType& dataType = propertyData.header->getDataType();
-
-            switch ( dataType.getPod() )
+            case Alembic::AbcCoreAbstract::kCompoundProperty:
             {
-                case Alembic::Util::kBooleanPOD:
+                return -EISDIR;
+            }
+            case Alembic::AbcCoreAbstract::kScalarProperty:
+            {
+                const Alembic::AbcCoreAbstract::DataType& dataType = propertyData.header->getDataType();
+
+                switch ( dataType.getPod() )
                 {
-                    return readScalarProperty< Alembic::Util::bool_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName(),
-                            dataType.getExtent()
-                            );
-                }
-                case Alembic::Util::kUint8POD:
-                {
-                    return readScalarProperty< Alembic::Util::uint8_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName(),
-                            dataType.getExtent()
-                            );
-                }
-                case Alembic::Util::kInt32POD:
-                {
-                    return readScalarProperty< Alembic::Util::int32_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName(),
-                            dataType.getExtent()
-                            );
-                }
-                case Alembic::Util::kUint32POD:
-                {
-                    return readScalarProperty< Alembic::Util::uint32_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName(),
-                            dataType.getExtent()
-                            );
-                }
-                case Alembic::Util::kFloat32POD:
-                {
-                    return readScalarProperty< Alembic::Util::float32_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName(),
-                            dataType.getExtent()
-                            );
-                }
-                case Alembic::Util::kFloat64POD:
-                {
-                    return readScalarProperty< Alembic::Util::float64_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName(),
-                            dataType.getExtent()
-                            );
-                }
-                default:
-                {
-                    break;
+                    case Alembic::Util::kBooleanPOD:
+                    {
+                        return readScalarProperty< Alembic::Util::bool_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName(),
+                                dataType.getExtent()
+                                );
+                    }
+                    case Alembic::Util::kUint8POD:
+                    {
+                        return readScalarProperty< Alembic::Util::uint8_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName(),
+                                dataType.getExtent()
+                                );
+                    }
+                    case Alembic::Util::kInt32POD:
+                    {
+                        return readScalarProperty< Alembic::Util::int32_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName(),
+                                dataType.getExtent()
+                                );
+                    }
+                    case Alembic::Util::kUint32POD:
+                    {
+                        return readScalarProperty< Alembic::Util::uint32_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName(),
+                                dataType.getExtent()
+                                );
+                    }
+                    case Alembic::Util::kFloat32POD:
+                    {
+                        return readScalarProperty< Alembic::Util::float32_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName(),
+                                dataType.getExtent()
+                                );
+                    }
+                    case Alembic::Util::kFloat64POD:
+                    {
+                        return readScalarProperty< Alembic::Util::float64_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName(),
+                                dataType.getExtent()
+                                );
+                    }
+                    default:
+                    {
+                        break;
+                    }
                 }
             }
-        }
-        case Alembic::AbcCoreAbstract::kArrayProperty:
-        {
-            const Alembic::AbcCoreAbstract::DataType& dataType = propertyData.header->getDataType();
-
-            switch ( dataType.getPod() )
+            case Alembic::AbcCoreAbstract::kArrayProperty:
             {
-                case Alembic::Util::kBooleanPOD:
+                const Alembic::AbcCoreAbstract::DataType& dataType = propertyData.header->getDataType();
+
+                switch ( dataType.getPod() )
                 {
-                    return readArrayProperty< Alembic::Util::bool_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kInt8POD:
-                {
-                    return readArrayProperty< Alembic::Util::int8_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kUint8POD:
-                {
-                    return readArrayProperty< Alembic::Util::uint8_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kInt16POD:
-                {
-                    return readArrayProperty< Alembic::Util::int16_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kUint16POD:
-                {
-                    return readArrayProperty< Alembic::Util::uint16_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kInt32POD:
-                {
-                    return readArrayProperty< Alembic::Util::int32_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kUint32POD:
-                {
-                    return readArrayProperty< Alembic::Util::uint32_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kInt64POD:
-                {
-                    return readArrayProperty< Alembic::Util::int64_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kUint64POD:
-                {
-                    return readArrayProperty< Alembic::Util::uint64_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kFloat16POD:
-                {
-                    return readArrayProperty< Alembic::Util::float16_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kFloat32POD:
-                {
-                    return readArrayProperty< Alembic::Util::float32_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                case Alembic::Util::kFloat64POD:
-                {
-                    return readArrayProperty< Alembic::Util::float64_t >(
-                            buf,
-                            propertyData.parent.getPtr(),
-                            propertyData.header->getName()
-                            );
-                }
-                default:
-                {
-                    break;
+                    case Alembic::Util::kBooleanPOD:
+                    {
+                        return readArrayProperty< Alembic::Util::bool_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kInt8POD:
+                    {
+                        return readArrayProperty< Alembic::Util::int8_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kUint8POD:
+                    {
+                        return readArrayProperty< Alembic::Util::uint8_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kInt16POD:
+                    {
+                        return readArrayProperty< Alembic::Util::int16_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kUint16POD:
+                    {
+                        return readArrayProperty< Alembic::Util::uint16_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kInt32POD:
+                    {
+                        return readArrayProperty< Alembic::Util::int32_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kUint32POD:
+                    {
+                        return readArrayProperty< Alembic::Util::uint32_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kInt64POD:
+                    {
+                        return readArrayProperty< Alembic::Util::int64_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kUint64POD:
+                    {
+                        return readArrayProperty< Alembic::Util::uint64_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kFloat16POD:
+                    {
+                        return readArrayProperty< Alembic::Util::float16_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kFloat32POD:
+                    {
+                        return readArrayProperty< Alembic::Util::float32_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    case Alembic::Util::kFloat64POD:
+                    {
+                        return readArrayProperty< Alembic::Util::float64_t >(
+                                buf,
+                                propertyData.parent.getPtr(),
+                                propertyData.header->getName()
+                                );
+                    }
+                    default:
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -721,23 +750,36 @@ int AlembicFS::readdir(
                 cObj.remainder
                 );
 
-        if ( ! propertyData.header || ! propertyData.header->isCompound() )
+        if ( ! propertyData.header )
         {
             return -ENOENT;
         }
 
-        Alembic::AbcGeom::ICompoundProperty property(
-                propertyData.parent,
-                propertyData.header->getName()
-                );
-
-        for ( uint32_t p = 0; p < property.getNumProperties(); ++p )
+        switch( propertyData.header->getPropertyType() )
         {
-            const Alembic::AbcCoreAbstract::PropertyHeader& header =
-                property.getPropertyHeader( p);
-            const std::string& name = header.getName();
+            case Alembic::AbcCoreAbstract::kCompoundProperty:
+            {
+                Alembic::AbcGeom::ICompoundProperty property(
+                        propertyData.parent,
+                        propertyData.header->getName()
+                        );
 
-            filler(buf, name.c_str(), NULL, 0);
+                for ( uint32_t p = 0; p < property.getNumProperties(); ++p )
+                {
+                    const Alembic::AbcCoreAbstract::PropertyHeader& header =
+                        property.getPropertyHeader( p);
+                    const std::string& name = header.getName();
+
+                    filler(buf, name.c_str(), NULL, 0);
+                }
+                break;
+            }
+            case Alembic::AbcCoreAbstract::kScalarProperty:
+            case Alembic::AbcCoreAbstract::kArrayProperty:
+            {
+                filler(buf, "values", NULL, 0);
+                break;
+            }
         }
     }
 
