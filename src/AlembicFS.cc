@@ -56,7 +56,7 @@ void AlembicFS::setRootDir(const char *path)
     m_root = path;
 }
 
-AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
+ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
 {
     std::string path_ = path;
 
@@ -64,7 +64,7 @@ AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
 
     if ( path_ == "/" )
     {
-        return ClassifiedObject( iObj, kObject );
+        return ClassifiedObject( iObj, ClassifiedObject::kObject );
     }
 
     PathSegments strs;
@@ -78,13 +78,13 @@ AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
         {
             if ( i == strs.size() - 1 )
             {
-                return ClassifiedObject( iObj, kProperties );
+                return ClassifiedObject( iObj, ClassifiedObject::kProperties );
             }
 
             // Create vector with remainder of the path after the "properties" level
             //
             PathSegments remainder( strs.begin() + i + 1, strs.end() );
-            return ClassifiedObject( iObj, kProperty, remainder );
+            return ClassifiedObject( iObj, ClassifiedObject::kProperty, remainder );
         }
         else
         {
@@ -96,11 +96,11 @@ AlembicFS::ClassifiedObject AlembicFS::getObjectFromPath( const char* path )
         }
     }
 
-    return ClassifiedObject( iObj, kObject );
+    return ClassifiedObject( iObj, ClassifiedObject::kObject );
 }
 
 
-AlembicFS::PropertyData AlembicFS::getPropertyDataFromPath(
+PropertyData AlembicFS::getPropertyDataFromPath(
         Alembic::AbcGeom::IObject iObj,
         const PathSegments& path
         )
@@ -168,14 +168,14 @@ int AlembicFS::getattr( const char *path, struct stat *statbuf )
 
     switch ( cObj.classification )
     {
-        case kObject:
-        case kProperties:
+        case ClassifiedObject::kObject:
+        case ClassifiedObject::kProperties:
         {
             statbuf->st_mode = S_IFDIR | S_IRUSR;
             statbuf->st_size = 4096;
             break;
         }
-        case kProperty:
+        case ClassifiedObject::kProperty:
         {
             PropertyData propertyData = getPropertyDataFromPath(
                     cObj.iObj,
@@ -706,7 +706,7 @@ int AlembicFS::readdir(
 
     // Should be a switch statement
     //
-    if ( cObj.classification == kObject )
+    if ( cObj.classification == ClassifiedObject::kObject )
     {
         filler(buf, ".", NULL, 0);
         filler(buf, "..", NULL, 0);
@@ -727,7 +727,7 @@ int AlembicFS::readdir(
             filler(buf, "properties", NULL, 0);
         }
     }
-    else if ( cObj.classification == kProperties )
+    else if ( cObj.classification == ClassifiedObject::kProperties )
     {
         filler(buf, ".", NULL, 0);
         filler(buf, "..", NULL, 0);
@@ -743,7 +743,7 @@ int AlembicFS::readdir(
             filler(buf, name.c_str(), NULL, 0);
         }
     }
-    else if ( cObj.classification == kProperty )
+    else if ( cObj.classification == ClassifiedObject::kProperty )
     {
         PropertyData propertyData = getPropertyDataFromPath(
                 cObj.iObj,

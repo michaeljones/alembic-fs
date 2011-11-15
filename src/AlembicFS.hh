@@ -1,10 +1,12 @@
-
 #ifndef ALEMBICFS_HH
 #define ALEMBICFS_HH
 
-#include <Alembic/AbcGeom/All.h>
-#include <Alembic/AbcCoreHDF5/All.h>
+#include "ClassifiedObject.hh"
+#include "PropertyData.hh"
+
 #include <Alembic/AbcCoreAbstract/All.h>
+#include <Alembic/AbcCoreHDF5/All.h>
+#include <Alembic/AbcGeom/All.h>
 
 #include <ctype.h>
 #include <dirent.h>
@@ -76,59 +78,6 @@ private:
     struct stat* m_stat;
     std::string m_path;
     Alembic::AbcGeom::IArchive* m_archive;
-
-private:
-
-    enum Classification
-    {
-        kObject = 0,
-        kProperties,
-        kProperty
-    };
-
-    typedef std::vector< std::string > PathSegments;
-
-    struct ClassifiedObject
-    {
-        ClassifiedObject( Alembic::AbcGeom::IObject _iObj, Classification _classification )
-         : iObj( _iObj ), classification( _classification ) {}
-
-        ClassifiedObject(
-                Alembic::AbcGeom::IObject _iObj,
-                Classification _classification,
-                PathSegments& _remainder
-                )
-         : iObj( _iObj ),
-           classification( _classification ),
-           remainder( _remainder ) {}
-
-        Alembic::AbcGeom::IObject iObj;
-        Classification classification;
-        PathSegments remainder;
-    };
-
-    struct PropertyData
-    {
-        PropertyData(
-                const Alembic::AbcCoreAbstract::PropertyHeader* header_,
-                Alembic::AbcGeom::ICompoundProperty parent_
-                )
-         : header( header_ ),
-           parent( parent_ ) {}
-
-        PropertyData(
-                const Alembic::AbcCoreAbstract::PropertyHeader* header_,
-                Alembic::AbcGeom::ICompoundProperty parent_,
-                PathSegments& _remainder
-                )
-         : header( header_ ),
-           parent( parent_ ),
-           remainder( _remainder ) {}
-
-        const Alembic::AbcCoreAbstract::PropertyHeader* header;
-        Alembic::AbcGeom::ICompoundProperty parent;
-        PathSegments remainder;
-    };
 
 private:
 
