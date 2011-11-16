@@ -1,5 +1,7 @@
 #include "AlembicFS.hh"
 
+#include "OutputTrait.hh"
+
 #include <boost/algorithm/string.hpp>
 
 #include <sstream>
@@ -331,24 +333,6 @@ int AlembicFS::open(const char *path, struct fuse_file_info *fileInfo)
     printf("open(path=%s)\n", path);
     return 0;
 }
-
-template< typename T >
-struct OutputTrait
-{
-    typedef T output_type;
-};
-
-template<>
-struct OutputTrait< Alembic::Util::int8_t >
-{
-    typedef int32_t output_type;
-};
-
-template<>
-struct OutputTrait< Alembic::Util::uint8_t >
-{
-    typedef uint32_t output_type;
-};
 
 template< typename TYPE >
 int readScalarProperty(
