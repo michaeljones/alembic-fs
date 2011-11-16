@@ -1,8 +1,11 @@
 #include "wrap.hh"
 #include "AlembicFS.hh"
 
+#include <boost/scoped_ptr.hpp>
+
 #include <fuse.h>
 #include <stdio.h>
+
 
 struct fuse_operations alembicfs_oper;
 
@@ -48,10 +51,23 @@ int main(int argc, char *argv[])
     struct stat abcStat;
     lstat(path, &abcStat);
 
-    // Set our root - is this needed?
-    AlembicFS::Instance()->setRootDir("/");
-    AlembicFS::Instance()->setStat( &abcStat );
-    AlembicFS::Instance()->setFile( path );
+    boost::scoped_ptr< Alembic::AbcGeom::IArchive > archive(
+            new Alembic::AbcGeom::IArchive(
+                Alembic::AbcCoreHDF5::ReadArchive(),
+                path,
+                Alembic::AbcGeom::ErrorHandler::kQuietNoopPolicy
+                )
+            );
+
+    boost::scoped_ptr< AlembicFS > instance(
+            new AlembicFS(
+                "/",        // Set our root - is this needed?
+                &abcStat,
+                path,
+                archive.get()
+                )
+            );
+    AlembicFS::setInstance( instance.get() );
 
     int fuse_stat = fuse_main(argc, argv, &alembicfs_oper, NULL);
 

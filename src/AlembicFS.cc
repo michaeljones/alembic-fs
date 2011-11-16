@@ -6,22 +6,31 @@
 
 #include <sstream>
 
-AlembicFS* AlembicFS::_instance = NULL;
+AlembicFS* AlembicFS::s_instance = NULL;
 
 #define RETURN_ERRNO(x) (x) == 0 ? 0 : -errno
 
-AlembicFS* AlembicFS::Instance() {
-    if(_instance == NULL) {
-        _instance = new AlembicFS();
-    }
-    return _instance;
+AlembicFS* AlembicFS::instance()
+{
+    return s_instance;
 }
 
-AlembicFS::AlembicFS() {
-
+void AlembicFS::setInstance( AlembicFS* instance )
+{
+    s_instance = instance;
 }
 
-AlembicFS::~AlembicFS() {
+AlembicFS::AlembicFS(
+        const char* root,
+        struct stat* statData,
+        const char* path,
+        Alembic::AbcGeom::IArchive* archive
+        )
+ : m_root( root ),
+   m_stat( statData ),
+   m_path( path ),
+   m_archive( archive )
+{
 
 }
 
@@ -33,29 +42,6 @@ void AlembicFS::absPath(char dest[PATH_MAX], const char *path)
     strcpy(dest, m_root);
     strncat(dest, path, PATH_MAX);
     //printf("translated path: %s to %s\n", path, dest);
-}
-
-void AlembicFS::setStat(struct stat* _stat)
-{
-    m_stat = _stat;
-}
-
-void AlembicFS::setFile(const char* path)
-{
-    m_path = path;
-
-    m_archive = new Alembic::AbcGeom::IArchive(
-            Alembic::AbcCoreHDF5::ReadArchive(),
-            path,
-            Alembic::AbcGeom::ErrorHandler::kQuietNoopPolicy
-            );
-
-}
-
-void AlembicFS::setRootDir(const char *path)
-{
-    printf("setting FS root to: %s\n", path);
-    m_root = path;
 }
 
 ClassifiedObject AlembicFS::getObjectFromPath( const char* path )

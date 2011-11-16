@@ -25,16 +25,16 @@ class AlembicFS
 {
 public:
 
-    AlembicFS();
+    AlembicFS(
+            const char* root,
+            struct stat* statData,
+            const char* path,
+            Alembic::AbcGeom::IArchive* archive
+            );
     ~AlembicFS();
 
-    static AlembicFS *Instance();
-
-public:
-
-    void setRootDir(const char* path);
-    void setStat(struct stat* _stat);
-    void setFile(const char* path);
+    static AlembicFS* instance();
+    static void setInstance( AlembicFS* instance );
 
 public:
 
@@ -70,7 +70,7 @@ public:
 
 private:
 
-    static AlembicFS *_instance;
+    static AlembicFS* s_instance;
 
 private:
 

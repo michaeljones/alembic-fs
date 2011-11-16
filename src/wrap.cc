@@ -6,89 +6,89 @@ void set_rootdir(const char *path) {
 }
 
 int wrap_getattr(const char *path, struct stat *statbuf) {
-    return AlembicFS::Instance()->getattr(path, statbuf);
+    return AlembicFS::instance()->getattr(path, statbuf);
 }
 
 int wrap_readlink(const char *path, char *link, size_t size) {
-    return AlembicFS::Instance()->readlink(path, link, size);
+    return AlembicFS::instance()->readlink(path, link, size);
 }
 
 int wrap_mknod(const char *path, mode_t mode, dev_t dev) {
-    return AlembicFS::Instance()->mknod(path, mode, dev);
+    return AlembicFS::instance()->mknod(path, mode, dev);
 }
 int wrap_mkdir(const char *path, mode_t mode) {
-    return AlembicFS::Instance()->mkdir(path, mode);
+    return AlembicFS::instance()->mkdir(path, mode);
 }
 int wrap_unlink(const char *path) {
-    return AlembicFS::Instance()->unlink(path);
+    return AlembicFS::instance()->unlink(path);
 }
 int wrap_rmdir(const char *path) {
-    return AlembicFS::Instance()->rmdir(path);
+    return AlembicFS::instance()->rmdir(path);
 }
 int wrap_symlink(const char *path, const char *link) {
-    return AlembicFS::Instance()->symlink(path, link);
+    return AlembicFS::instance()->symlink(path, link);
 }
 int wrap_rename(const char *path, const char *newpath) {
-    return AlembicFS::Instance()->rename(path, newpath);
+    return AlembicFS::instance()->rename(path, newpath);
 }
 int wrap_link(const char *path, const char *newpath) {
-    return AlembicFS::Instance()->link(path, newpath);
+    return AlembicFS::instance()->link(path, newpath);
 }
 int wrap_chmod(const char *path, mode_t mode) {
-    return AlembicFS::Instance()->chmod(path, mode);
+    return AlembicFS::instance()->chmod(path, mode);
 }
 int wrap_chown(const char *path, uid_t uid, gid_t gid) {
-    return AlembicFS::Instance()->chown(path, uid, gid);
+    return AlembicFS::instance()->chown(path, uid, gid);
 }
 int wrap_truncate(const char *path, off_t newSize) {
-    return AlembicFS::Instance()->truncate(path, newSize);
+    return AlembicFS::instance()->truncate(path, newSize);
 }
 int wrap_utime(const char *path, struct utimbuf *ubuf) {
-    return AlembicFS::Instance()->utime(path, ubuf);
+    return AlembicFS::instance()->utime(path, ubuf);
 }
 int wrap_open(const char *path, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->open(path, fileInfo);
+    return AlembicFS::instance()->open(path, fileInfo);
 }
 int wrap_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->read(path, buf, size, offset, fileInfo);
+    return AlembicFS::instance()->read(path, buf, size, offset, fileInfo);
 }
 int wrap_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->write(path, buf, size, offset, fileInfo);
+    return AlembicFS::instance()->write(path, buf, size, offset, fileInfo);
 }
 int wrap_statfs(const char *path, struct statvfs *statInfo) {
-    return AlembicFS::Instance()->statfs(path, statInfo);
+    return AlembicFS::instance()->statfs(path, statInfo);
 }
 int wrap_flush(const char *path, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->flush(path, fileInfo);
+    return AlembicFS::instance()->flush(path, fileInfo);
 }
 int wrap_release(const char *path, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->release(path, fileInfo);
+    return AlembicFS::instance()->release(path, fileInfo);
 }
 int wrap_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
-    return AlembicFS::Instance()->fsync(path, datasync, fi);
+    return AlembicFS::instance()->fsync(path, datasync, fi);
 }
 int wrap_setxattr(const char *path, const char *name, const char *value, size_t size, int flags) {
-    return AlembicFS::Instance()->setxattr(path, name, value, size, flags);
+    return AlembicFS::instance()->setxattr(path, name, value, size, flags);
 }
 int wrap_getxattr(const char *path, const char *name, char *value, size_t size) {
-    return AlembicFS::Instance()->getxattr(path, name, value, size);
+    return AlembicFS::instance()->getxattr(path, name, value, size);
 }
 int wrap_listxattr(const char *path, char *list, size_t size) {
-    return AlembicFS::Instance()->listxattr(path, list, size);
+    return AlembicFS::instance()->listxattr(path, list, size);
 }
 int wrap_removexattr(const char *path, const char *name) {
-    return AlembicFS::Instance()->removexattr(path, name);
+    return AlembicFS::instance()->removexattr(path, name);
 }
 int wrap_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->readdir(path, buf, filler, offset, fileInfo);
+    return AlembicFS::instance()->readdir(path, buf, filler, offset, fileInfo);
 }
 int wrap_releasedir(const char *path, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->releasedir(path, fileInfo);
+    return AlembicFS::instance()->releasedir(path, fileInfo);
 }
 int wrap_fsyncdir(const char *path, int datasync, struct fuse_file_info *fileInfo) {
-    return AlembicFS::Instance()->fsyncdir(path, datasync, fileInfo);
+    return AlembicFS::instance()->fsyncdir(path, datasync, fileInfo);
 }
 void* wrap_init(struct fuse_conn_info *conn) {
-    return AlembicFS::Instance()->init(conn);
+    return AlembicFS::instance()->init(conn);
 }
 
