@@ -1,10 +1,6 @@
 #include "wrap.hh"
 #include "AlembicFS.hh"
 
-void set_rootdir(const char *path) {
-    AlembicFS::Instance()->setRootDir(path);
-}
-
 int wrap_getattr(const char *path, struct stat *statbuf) {
     return AlembicFS::instance()->getattr(path, statbuf);
 }

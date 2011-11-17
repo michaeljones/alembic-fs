@@ -19,8 +19,6 @@
 extern "C" {
 #endif
 
-void set_rootdir(const char *path);
-
 int wrap_getattr(const char *path, struct stat *statbuf);
 int wrap_readlink(const char *path, char *link, size_t size);
 int wrap_mknod(const char *path, mode_t mode, dev_t dev);
