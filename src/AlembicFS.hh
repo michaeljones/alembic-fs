@@ -3,6 +3,7 @@
 
 #include "ClassifiedObject.hh"
 #include "PropertyData.hh"
+#include "PropertyView.hh"
 
 #include <Alembic/AbcCoreAbstract/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
@@ -29,9 +30,9 @@ public:
             const char* root,
             struct stat* statData,
             const char* path,
-            Alembic::AbcGeom::IArchive* archive
+            Alembic::AbcGeom::IArchive* archive,
+            PropertyViewLookup& propertyViewLookup
             );
-    ~AlembicFS();
 
     static AlembicFS* instance();
     static void setInstance( AlembicFS* instance );
@@ -78,6 +79,8 @@ private:
     struct stat* m_stat;
     std::string m_path;
     Alembic::AbcGeom::IArchive* m_archive;
+
+    PropertyViewLookup m_propertyViewLookup;
 
 private:
 

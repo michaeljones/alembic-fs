@@ -1,5 +1,6 @@
-#include "wrap.hh"
+#include "ValuesPropertyView.hh"
 #include "AlembicFS.hh"
+#include "wrap.hh"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -59,12 +60,17 @@ int main(int argc, char *argv[])
                 )
             );
 
+    PropertyViewLookup propertyViewLookup;
+    boost::scoped_ptr< PropertyView > valuesPropertyView( new ValuesPropertyView );
+    propertyViewLookup[ "values" ] = valuesPropertyView.get();
+
     boost::scoped_ptr< AlembicFS > instance(
             new AlembicFS(
                 "/",        // Set our root - is this needed?
                 &abcStat,
                 path,
-                archive.get()
+                archive.get(),
+                propertyViewLookup
                 )
             );
     AlembicFS::setInstance( instance.get() );
