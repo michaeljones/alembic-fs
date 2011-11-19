@@ -2,6 +2,7 @@
 #include "AlembicFS.hh"
 #include "wrap.hh"
 
+#include "JsonValuesPropertyView.hh"
 #include "MaxValuePropertyView.hh"
 #include "MinValuePropertyView.hh"
 #include "ValuesPropertyView.hh"
@@ -74,6 +75,9 @@ int main(int argc, char *argv[])
 
     boost::scoped_ptr< PropertyView > maxValuePropertyView( new MaxValuePropertyView );
     propertyViewLookup[ "max" ] = maxValuePropertyView.get();
+
+    boost::scoped_ptr< PropertyView > jsonValuesPropertyView( new JsonValuesPropertyView );
+    propertyViewLookup[ "json" ] = jsonValuesPropertyView.get();
 
     boost::scoped_ptr< AlembicFS > instance(
             new AlembicFS(
