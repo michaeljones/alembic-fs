@@ -11,8 +11,8 @@ system and run::
 
    make
 
-In the root directory. Apologies for not providing a portable Makefile, it is
-still early stages.
+In the root directory. Apologies for not providing a portable Makefile, I've got
+no experience with creating them.
 
 Then run::
 
