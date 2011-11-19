@@ -2,6 +2,7 @@
 #include "AlembicFS.hh"
 #include "wrap.hh"
 
+#include "MaxValuePropertyView.hh"
 #include "MinValuePropertyView.hh"
 #include "ValuesPropertyView.hh"
 
@@ -70,6 +71,9 @@ int main(int argc, char *argv[])
 
     boost::scoped_ptr< PropertyView > minValuePropertyView( new MinValuePropertyView );
     propertyViewLookup[ "min" ] = minValuePropertyView.get();
+
+    boost::scoped_ptr< PropertyView > maxValuePropertyView( new MaxValuePropertyView );
+    propertyViewLookup[ "max" ] = maxValuePropertyView.get();
 
     boost::scoped_ptr< AlembicFS > instance(
             new AlembicFS(
