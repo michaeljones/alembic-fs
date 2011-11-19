@@ -12,6 +12,12 @@ struct OutputTrait
 };
 
 template<>
+struct OutputTrait< Alembic::Util::bool_t >
+{
+    typedef uint32_t output_type;
+};
+
+template<>
 struct OutputTrait< Alembic::Util::int8_t >
 {
     typedef int32_t output_type;
