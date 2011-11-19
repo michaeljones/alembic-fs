@@ -1,6 +1,9 @@
-#include "ValuesPropertyView.hh"
+
 #include "AlembicFS.hh"
 #include "wrap.hh"
+
+#include "MinValuePropertyView.hh"
+#include "ValuesPropertyView.hh"
 
 #include <boost/scoped_ptr.hpp>
 
@@ -61,8 +64,12 @@ int main(int argc, char *argv[])
             );
 
     PropertyViewLookup propertyViewLookup;
+
     boost::scoped_ptr< PropertyView > valuesPropertyView( new ValuesPropertyView );
     propertyViewLookup[ "values" ] = valuesPropertyView.get();
+
+    boost::scoped_ptr< PropertyView > minValuePropertyView( new MinValuePropertyView );
+    propertyViewLookup[ "min" ] = minValuePropertyView.get();
 
     boost::scoped_ptr< AlembicFS > instance(
             new AlembicFS(
