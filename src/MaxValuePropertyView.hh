@@ -1,6 +1,7 @@
 #ifndef ALEMBICFS_MAXVALUEPROPERTYVIEW_HH
 #define ALEMBICFS_MAXVALUEPROPERTYVIEW_HH
 
+#include "PropertyHandler.hh"
 #include "PropertyView.hh"
 #include "OutputTrait.hh"
 
@@ -17,260 +18,86 @@ public:
     }
 
     template< typename TYPE >
-    int readScalarProperty(
-            char *buf,
-            const Alembic::Abc::CompoundPropertyReaderPtr ptr,
-            const std::string& propertyName,
-            const Alembic::Abc::uint8_t extent
-            )
+    struct MaxScalarOp
     {
-        Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty( propertyName );
-
-        std::vector< TYPE > data( extent );
-
-        vals->asScalarPtr()->getSample( 0, &(data.front()) );
-
-        typename OutputTrait< TYPE >::output_type max
-            = std::numeric_limits< typename OutputTrait< TYPE >::output_type >::min();
-
-        for ( uint32_t i = 0; i < extent; ++i )
+        int operator()(
+                char *buf,
+                const Alembic::Abc::CompoundPropertyReaderPtr ptr,
+                const std::string& propertyName,
+                const Alembic::Abc::uint8_t extent
+                )
         {
-            max = std::max(
-                    typename OutputTrait< TYPE >::output_type( data[ i ] ),
-                    max 
-                    );
+            Alembic::Abc::BasePropertyReaderPtr vals = ptr->getScalarProperty( propertyName );
+
+            std::vector< TYPE > data( extent );
+
+            vals->asScalarPtr()->getSample( 0, &(data.front()) );
+
+            typename OutputTrait< TYPE >::output_type max
+                = std::numeric_limits< typename OutputTrait< TYPE >::output_type >::min();
+
+            for ( uint32_t i = 0; i < extent; ++i )
+            {
+                max = std::max(
+                        typename OutputTrait< TYPE >::output_type( data[ i ] ),
+                        max 
+                        );
+            }
+
+            std::ostringstream stream;
+            stream << max << std::endl;
+
+            sprintf( buf, "%s", stream.str().c_str() );
+
+            return stream.str().size();
         }
-
-        std::ostringstream stream;
-        stream << max << std::endl;
-
-        sprintf( buf, "%s", stream.str().c_str() );
-
-        return stream.str().size();
-    }
+    };
 
 
     template< typename TYPE >
-    int readArrayProperty(
-            char *buf,
-            const Alembic::Abc::CompoundPropertyReaderPtr ptr,
-            const std::string& propertyName
-            )
+    struct MaxArrayOp
     {
-        Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
-                propertyName
-                );
-
-        Alembic::Abc::ArraySamplePtr arraySamplePtr;
-        vals->asArrayPtr()->getSample( 0, arraySamplePtr );
-
-        size_t numVals = arraySamplePtr->getDimensions().numPoints();
-        TYPE* data = (TYPE *)(arraySamplePtr->getData());
-
-        typename OutputTrait< TYPE >::output_type max
-            = std::numeric_limits< typename OutputTrait< TYPE >::output_type >::min();
-
-        for ( size_t i = 0; i < numVals; ++i )
+        int operator()(
+                char *buf,
+                const Alembic::Abc::CompoundPropertyReaderPtr ptr,
+                const std::string& propertyName
+                )
         {
-            max = std::max(
-                    typename OutputTrait< TYPE >::output_type( data[ i ] ),
-                    max 
+            Alembic::Abc::BasePropertyReaderPtr vals = ptr->getProperty(
+                    propertyName
                     );
+
+            Alembic::Abc::ArraySamplePtr arraySamplePtr;
+            vals->asArrayPtr()->getSample( 0, arraySamplePtr );
+
+            size_t numVals = arraySamplePtr->getDimensions().numPoints();
+            TYPE* data = (TYPE *)(arraySamplePtr->getData());
+
+            typename OutputTrait< TYPE >::output_type max
+                = std::numeric_limits< typename OutputTrait< TYPE >::output_type >::min();
+
+            for ( size_t i = 0; i < numVals; ++i )
+            {
+                max = std::max(
+                        typename OutputTrait< TYPE >::output_type( data[ i ] ),
+                        max 
+                        );
+            }
+
+            std::ostringstream stream;
+            stream << max << std::endl;
+
+            sprintf( buf, "%s", stream.str().c_str() );
+
+            return stream.str().size();
         }
-
-        std::ostringstream stream;
-        stream << max << std::endl;
-
-        sprintf( buf, "%s", stream.str().c_str() );
-
-        return stream.str().size();
-    }
+    };
 
     int handleProperty( PropertyData& propertyData, char* buf )
     {
-        switch( propertyData.header->getPropertyType() )
-        {
-            case Alembic::AbcCoreAbstract::kCompoundProperty:
-            {
-                return -EISDIR;
-            }
-            case Alembic::AbcCoreAbstract::kScalarProperty:
-            {
-                const Alembic::AbcCoreAbstract::DataType& dataType = propertyData.header->getDataType();
+        PropertyHandler< MaxScalarOp, MaxArrayOp> propertyHandler;
 
-                switch ( dataType.getPod() )
-                {
-                    case Alembic::Util::kBooleanPOD:
-                    {
-                        return readScalarProperty< Alembic::Util::bool_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName(),
-                                dataType.getExtent()
-                                );
-                    }
-                    case Alembic::Util::kUint8POD:
-                    {
-                        return readScalarProperty< Alembic::Util::uint8_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName(),
-                                dataType.getExtent()
-                                );
-                    }
-                    case Alembic::Util::kInt32POD:
-                    {
-                        return readScalarProperty< Alembic::Util::int32_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName(),
-                                dataType.getExtent()
-                                );
-                    }
-                    case Alembic::Util::kUint32POD:
-                    {
-                        return readScalarProperty< Alembic::Util::uint32_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName(),
-                                dataType.getExtent()
-                                );
-                    }
-                    case Alembic::Util::kFloat32POD:
-                    {
-                        return readScalarProperty< Alembic::Util::float32_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName(),
-                                dataType.getExtent()
-                                );
-                    }
-                    case Alembic::Util::kFloat64POD:
-                    {
-                        return readScalarProperty< Alembic::Util::float64_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName(),
-                                dataType.getExtent()
-                                );
-                    }
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-            case Alembic::AbcCoreAbstract::kArrayProperty:
-            {
-                const Alembic::AbcCoreAbstract::DataType& dataType = propertyData.header->getDataType();
-
-                switch ( dataType.getPod() )
-                {
-                    case Alembic::Util::kBooleanPOD:
-                    {
-                        return readArrayProperty< Alembic::Util::bool_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kInt8POD:
-                    {
-                        return readArrayProperty< Alembic::Util::int8_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kUint8POD:
-                    {
-                        return readArrayProperty< Alembic::Util::uint8_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kInt16POD:
-                    {
-                        return readArrayProperty< Alembic::Util::int16_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kUint16POD:
-                    {
-                        return readArrayProperty< Alembic::Util::uint16_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kInt32POD:
-                    {
-                        return readArrayProperty< Alembic::Util::int32_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kUint32POD:
-                    {
-                        return readArrayProperty< Alembic::Util::uint32_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kInt64POD:
-                    {
-                        return readArrayProperty< Alembic::Util::int64_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kUint64POD:
-                    {
-                        return readArrayProperty< Alembic::Util::uint64_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kFloat16POD:
-                    {
-                        return readArrayProperty< Alembic::Util::float16_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kFloat32POD:
-                    {
-                        return readArrayProperty< Alembic::Util::float32_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    case Alembic::Util::kFloat64POD:
-                    {
-                        return readArrayProperty< Alembic::Util::float64_t >(
-                                buf,
-                                propertyData.parent.getPtr(),
-                                propertyData.header->getName()
-                                );
-                    }
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return 0;
+        return propertyHandler.handle( propertyData, buf );
     }
 
 private:
