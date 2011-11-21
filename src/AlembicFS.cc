@@ -154,6 +154,9 @@ int AlembicFS::getattr( const char *path, struct stat *statbuf )
         return -ENOENT;
     }
 
+    // Clear stat buffer
+    memset( statbuf, 0, sizeof( struct stat ) );
+
     statbuf->st_size = m_stat->st_size;
 
     switch ( cObj.classification )
@@ -321,6 +324,12 @@ int AlembicFS::utime(const char *path, struct utimbuf *ubuf) {
 int AlembicFS::open(const char *path, struct fuse_file_info *fileInfo)
 {
     printf("open(path=%s)\n", path);
+
+    if( ( fileInfo->flags & 3 ) != O_RDONLY )
+    {
+        return -EACCES;
+    }
+
     return 0;
 }
 
