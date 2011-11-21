@@ -4,7 +4,7 @@ set abc=$1
 
 set dir=${abc}d
 
-mkdir $dir
+mkdir -p $dir
 $HOME/root/projects/alembic-fs/bin/alembic-fs -s $dir $abc
 
 cd $dir
