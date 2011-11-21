@@ -3,5 +3,5 @@ all:
 	make -C src $@
 
 clean:
-	rm -rf bin obj
+	rm -rf bin/alembic-fs obj
 

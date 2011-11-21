@@ -1,0 +1,25 @@
+#!/bin/tcsh -f
+
+# Get directory where this script is living
+set afsbin=${0:h}
+
+# Get name of the Alembic file and directory we'll be creating
+set abc=$1
+set dir=${abc}d
+
+mkdir -p $dir
+$afsbin/alembic-fs -d -s $dir $abc
+
+cd $dir
+
+tcsh
+
+cd -
+
+fusermount -u $dir
+
+rmdir $dir
+
+
+
+
