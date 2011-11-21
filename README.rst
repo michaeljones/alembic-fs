@@ -18,7 +18,7 @@ Then run::
 
    abcd <alembic file>
 
-And you will be placed in a new shell at the top level of the new Alembic
+And you will be placed in a new tcsh shell at the top level of the new Alembic
 filesystem which has the following features:
 
 - The object hierarchy is represented as a directory hierarchy.
@@ -44,7 +44,7 @@ Example Session
 
 ::
 
-   test1$ /home/mike/root/projects/alembic-fs/abcd Xform_tree.abc
+   test1$ abcd Xform_tree.abc
    mounting file system...
    Xform_tree.abcd$ ls
    4_0  4_1  4_2  4_3
@@ -57,20 +57,12 @@ Example Session
    3_3$ cd properties/
    properties$ ls
    properties$ ll
-   ls: .: No such file or directory
-   ls: ..: No such file or directory
-   ls: .xform: No such file or directory
    total 14M
    dr-------- 1 mike mike 4.0K 2011-11-19 16:53 .
    dr-------- 1 mike mike 4.0K 2011-11-19 16:53 ..
    dr-------- 1 mike mike 4.0K 2011-11-19 16:53 .xform
    properties$ cd .xform/
    .xform$ ll
-   ls: .animChans: No such file or directory
-   ls: isNotConstantIdentity: No such file or directory
-   ls: .inherits: No such file or directory
-   ls: .vals: No such file or directory
-   ls: .ops: No such file or directory
    total 23M
    dr-------- 1 mike mike 4.0K 2011-11-19 16:53 .animChans
    dr-------- 1 mike mike 4.0K 2011-11-19 16:53 .inherits
@@ -79,10 +71,6 @@ Example Session
    dr-------- 1 mike mike 4.0K 2011-11-19 16:53 .vals
    .xform$ cd .ops/
    .ops$ ll
-   ls: json: No such file or directory
-   ls: max: No such file or directory
-   ls: min: No such file or directory
-   ls: values: No such file or directory
    total 19M
    -r-------- 1 mike mike 4.0K 2011-11-19 16:53 json
    -r-------- 1 mike mike 4.0K 2011-11-19 16:53 max
