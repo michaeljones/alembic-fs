@@ -9,6 +9,11 @@ afsbin=${0%%abcd}
 abc=$1
 dir=${abc}d
 
+# Set useful environment variables so the information is accessible from within
+# the mounted session
+export AFS_FILE_PATH=`readlink -f -n $abc`
+export AFS_ROOT=`readlink -f -n $dir`
+
 # Create the mount directory
 mkdir -p $dir
 
@@ -28,7 +33,4 @@ fusermount -u $dir
 
 # Remove the mount directory
 rmdir $dir
-
-
-
 
