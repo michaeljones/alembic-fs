@@ -23,8 +23,11 @@ $afsbin/alembic-fs -d -s $dir $abc
 cd $dir
 
 # Start up the user's preferred shell - this runs until the user exits it and
-# then the rest of this script continues
-$SHELL
+# then the rest of this script continues. We || it with true so that the return
+# status is always true. In tests if the last command executed in the mounted
+# session fails, then the SHELL returns non-zero and this wrapper exits without
+# unmounting the directory
+$SHELL || true
 
 cd -
 
