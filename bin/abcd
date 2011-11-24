@@ -1,23 +1,32 @@
-#!/bin/tcsh -f
+#!/bin/sh
+
+set -e
 
 # Get directory where this script is living
-set afsbin=${0:h}
+afsbin=${0%%abcd}
 
 # Get name of the Alembic file and directory we'll be creating
-set abc=$1
-set dir=${abc}d
+abc=$1
+dir=${abc}d
 
+# Create the mount directory
 mkdir -p $dir
+
+# Mount the FUSE filesystem
 $afsbin/alembic-fs -s $dir $abc
 
 cd $dir
 
-tcsh
+# Start up the user's preferred shell - this runs until the user exits it and
+# then the rest of this script continues
+$SHELL
 
 cd -
 
+# Unmount the FUSE filesystem
 fusermount -u $dir
 
+# Remove the mount directory
 rmdir $dir
 
 
