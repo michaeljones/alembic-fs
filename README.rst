@@ -18,7 +18,7 @@ Then run::
 
    abcd <alembic file>
 
-And you will be placed in a new tcsh shell at the top level of the new Alembic
+And you will be placed in a new shell at the top level of the new Alembic
 filesystem which has the following features:
 
 - The object hierarchy is represented as a directory hierarchy.
