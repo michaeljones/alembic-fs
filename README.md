@@ -38,7 +38,7 @@ Exit the shell, with `exit` or `Ctrl-D`, to leave and unmount the filesystem.
 Example Session
 ---------------
 
-```
+```bash
 test1$ abcd Xform_tree.abc
 mounting file system...
 Xform_tree.abcd$ ls
